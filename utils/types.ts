@@ -9,6 +9,7 @@ export interface LoyaltyCard {
   notes?: string;
   // For custom logo/icon (URL string or base64)
   logoUrl?: string;
+  isFavorite?: boolean;
 }
 
 export type SortOption = 'alphabetical' | 'recent' | 'lastUsed' | 'custom';

@@ -79,6 +79,17 @@ export async function getCard(id: string): Promise<LoyaltyCard | null> {
     return null;
   }
 }
+export async function getCards(): Promise<LoyaltyCard[]> {
+  const raw = await AsyncStorage.getItem('cards');
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as LoyaltyCard[];
+  } catch {
+    console.warn('Failed to parse stored cards, resetting.');
+    await AsyncStorage.removeItem('cards');
+    return [];
+  }
+}
 
 // Load app settings
 export async function loadSettings(): Promise<AppSettings> {

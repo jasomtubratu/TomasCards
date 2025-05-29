@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, PinchGestureHandler } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
+import {
+  PinchGestureHandler,
+  PinchGestureHandlerGestureEvent,
+} from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedGestureHandler,
   useAnimatedStyle,
@@ -10,111 +14,102 @@ import Animated, {
 import { WebView } from 'react-native-webview';
 import { COLORS } from '@/constants/Colors';
 
-interface BarcodeRendererProps {
+export type BarcodeRendererProps = {
   code: string;
   codeType: 'barcode' | 'qrcode';
-}
+  width?: number;    // line thickness for barcode or size for QR
+  height?: number;   // height for barcode or size for QR
+};
 
-const AnimatedWebView = Animated.createAnimatedComponent(WebView);
-
-const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({ code, codeType }) => {
+const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
+  code,
+  codeType,
+  width,
+  height,
+}) => {
   const scale = useSharedValue(1);
-  const windowWidth = Dimensions.get('window').width - 64; // Account for padding
-  
-  // HTML content for rendering the barcode/QR code
-  const generateHtml = () => {
-    const scriptType = codeType === 'barcode' ? 'JsBarcode' : 'QRCode';
-    const elementId = codeType === 'barcode' ? 'barcode' : 'qrcode';
-    const implementation = codeType === 'barcode' 
-      ? `JsBarcode("#barcode", "${code}", {
-          format: "CODE128",
-          lineColor: "#FFFFFF",
-          background: "#252640",
-          width: 2,
-          height: 100,
-          displayValue: false
-        });`
-      : `new QRCode(document.getElementById("qrcode"), {
-          text: "${code}",
-          width: 200,
-          height: 200,
-          colorDark: "#FFFFFF",
-          colorLight: "#252640",
-          correctLevel: QRCode.CorrectLevel.H
-        });`;
+  const windowWidth = Dimensions.get('window').width - 64;
 
+  // Defaults
+  const defaultBarcodeWidth = 2;
+  const defaultBarcodeHeight = 100;
+  const defaultQrSize = 200;
+
+  // Derived dimensions
+  const barcodeWidth = width ?? defaultBarcodeWidth;
+  const barcodeHeight = height ?? defaultBarcodeHeight;
+  const qrSize = height ?? width ?? defaultQrSize;
+  const containerWidth = codeType === 'barcode' ? windowWidth : qrSize;
+  const containerHeight = codeType === 'barcode' ? barcodeHeight : qrSize;
+
+  // HTML content for rendering
+  const generateHtml = () => {
+    if (codeType === 'barcode') {
+      return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+          <style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;background-color:#252640;}</style>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        </head>
+        <body>
+          <svg id="barcode"></svg>
+          <script>
+            JsBarcode('#barcode', '${code}', {
+              format: 'CODE128',
+              lineColor: '#FFFFFF',
+              background: '#252640',
+              width: ${barcodeWidth},
+              height: ${barcodeHeight},
+              displayValue: false
+            });
+          </script>
+        </body>
+        </html>
+      `;
+    }
+
+    // QR Code
     return `
       <!DOCTYPE html>
       <html>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <style>
-          body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #252640;
-            overflow: hidden;
-          }
-          #container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-          }
-          svg, #qrcode {
-            max-width: 100%;
-          }
-          #qrcode img {
-            margin: 0 auto;
-          }
-        </style>
-        ${codeType === 'barcode' 
-          ? '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>' 
-          : '<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>'}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+        <style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;background-color:#252640;}#qrcode{padding:0;margin:0;}</style>
+        <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
       </head>
       <body>
-        <div id="container">
-          ${codeType === 'barcode' 
-            ? '<svg id="barcode"></svg>' 
-            : '<div id="qrcode"></div>'}
-        </div>
+        <div id="qrcode"></div>
         <script>
-          ${implementation}
+          const qr = qrcode(0, 'H');
+          qr.addData('${code}');
+          qr.make();
+          document.getElementById('qrcode').innerHTML = qr.createImgTag(${qrSize}, ${qrSize});
         </script>
       </body>
       </html>
     `;
   };
 
-  // Handle pinch gesture
-  const pinchGestureHandler = useAnimatedGestureHandler({
+  const pinchGestureHandler = useAnimatedGestureHandler<PinchGestureHandlerGestureEvent>({
     onActive: (event) => {
       scale.value = Math.max(0.5, Math.min(event.scale, 3));
     },
     onEnd: () => {
-      if (scale.value < 0.7) {
-        scale.value = withSpring(0.7);
-      } else if (scale.value > 3) {
-        scale.value = withSpring(3);
-      }
+      if (scale.value < 0.7) scale.value = withSpring(0.7);
+      else if (scale.value > 3) scale.value = withSpring(3);
     },
   });
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scale.value }],
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
     <View style={styles.container}>
       <PinchGestureHandler onGestureEvent={pinchGestureHandler}>
-        <Animated.View style={[styles.webViewContainer, animatedStyle]}>
-          <AnimatedWebView
-            style={styles.webView}
+        <Animated.View style={[styles.webViewContainer, animatedStyle, { width: containerWidth, height: containerHeight }]}>            
+          <WebView
+            style={[styles.webView, { backgroundColor: COLORS.backgroundMedium }]} 
             source={{ html: generateHtml() }}
             originWhitelist={['*']}
             scalesPageToFit={false}
@@ -125,16 +120,8 @@ const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({ code, codeType }) => 
         </Animated.View>
       </PinchGestureHandler>
       <View style={styles.instructions}>
-        <Svg height={40} width={windowWidth}>
-          <Rect
-            x={0}
-            y={0}
-            width={windowWidth}
-            height={40}
-            fill={COLORS.backgroundMedium}
-            rx={8}
-            ry={8}
-          />
+        <Svg height={40} width={containerWidth}>
+          <Rect x={0} y={0} width={containerWidth} height={40} fill={COLORS.backgroundMedium} rx={8} ry={8} />
         </Svg>
       </View>
     </View>
@@ -151,13 +138,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   webViewContainer: {
-    width: Dimensions.get('window').width - 64,
-    height: 200,
     borderRadius: 8,
     overflow: 'hidden',
   },
   webView: {
-    backgroundColor: COLORS.backgroundMedium,
+    flex: 1,
   },
   instructions: {
     marginTop: 16,

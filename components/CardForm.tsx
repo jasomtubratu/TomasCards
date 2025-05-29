@@ -10,7 +10,6 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Camera, Circle as XCircle, Save, ChartBar as BarChart4, QrCode } from 'lucide-react-native';
 import { LoyaltyCard } from '@/utils/types';
 import { COLORS } from '@/constants/Colors';
@@ -20,6 +19,7 @@ interface CardFormProps {
   existingCard?: LoyaltyCard;
   onSave: (card: LoyaltyCard) => Promise<void>;
   onScanPress?: () => void;
+  onCancel?: () => void;
 }
 
 // Card color options
@@ -37,9 +37,9 @@ const colorOptions = [
 const CardForm: React.FC<CardFormProps> = ({ 
   existingCard, 
   onSave,
-  onScanPress
+  onScanPress,
+  onCancel
 }) => {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(existingCard?.name || '');
   const [code, setCode] = useState(existingCard?.code || '');
@@ -73,9 +73,6 @@ const CardForm: React.FC<CardFormProps> = ({
       if (Platform.OS !== 'web') {
         await successHaptic();
       }
-      
-      // Navigate back
-      router.back();
     } catch (error) {
       console.error('Error saving card:', error);
     } finally {
@@ -92,6 +89,13 @@ const CardForm: React.FC<CardFormProps> = ({
       onScanPress();
     } else if (Platform.OS === 'web') {
       console.log('Camera scanning is not supported on web platform');
+    }
+  };
+
+  // Handle cancel
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
     }
   };
 
@@ -225,7 +229,7 @@ const CardForm: React.FC<CardFormProps> = ({
         <View style={styles.actions}>
           <TouchableOpacity 
             style={styles.cancelButton}
-            onPress={() => router.back()}
+            onPress={handleCancel}
           >
             <XCircle size={20} color={COLORS.textSecondary} />
             <Text style={styles.cancelButtonText}>Cancel</Text>
