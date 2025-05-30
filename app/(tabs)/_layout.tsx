@@ -7,18 +7,16 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false, // Hide the default header
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: COLORS.accent,
         tabBarInactiveTintColor: COLORS.textSecondary,
         tabBarLabelStyle: styles.tabBarLabel,
-        headerStyle: styles.header,
-        headerTitleStyle: styles.headerTitle,
-        headerTintColor: COLORS.textPrimary,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'My Cards',
+          title: 'Cards',
           tabBarLabel: 'Cards',
           tabBarIcon: ({ color, size }) => <HomeIcon size={size} color={color} />,
         }}
@@ -55,15 +53,5 @@ const styles = StyleSheet.create({
   tabBarLabel: {
     fontSize: 12,
     fontWeight: '500',
-  },
-  header: {
-    backgroundColor: COLORS.backgroundDark,
-    shadowColor: 'transparent',
-    elevation: 0,
-  },
-  headerTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 18,
-    fontWeight: '600',
   },
 });

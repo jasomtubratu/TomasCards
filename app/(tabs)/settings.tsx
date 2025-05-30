@@ -109,44 +109,32 @@ export default function SettingsScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Preferences Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
+        <Text style={styles.sectionTitle}>Security</Text>
         
-        <TouchableOpacity 
-          style={styles.settingRow}
-          onPress={toggleSortOption}
-        >
-          <View style={styles.settingLeft}>
-            <SortAsc size={24} color={COLORS.textSecondary} />
-            <View style={styles.settingTextContainer}>
-              <Text style={styles.settingTitle}>Default Sorting</Text>
-              <Text style={styles.settingDescription}>
-                Choose how your cards are sorted
-              </Text>
-            </View>
+      <View style={styles.settingRow}>
+        <View style={styles.settingLeft}>
+          <Fingerprint size={24} color={COLORS.textSecondary} />
+          <View style={styles.settingTextContainer}>
+            <Text style={styles.settingTitle}>PIN Code Unlock</Text>
+            <Text style={styles.settingDescription}>
+        Enable PIN code to unlock the app
+            </Text>
           </View>
-          <Text style={styles.settingValue}>
-            {settings.sortOption === 'alphabetical' ? 'A-Z' : 
-             settings.sortOption === 'recent' ? 'Recent' : 'Last Used'}
-          </Text>
-        </TouchableOpacity>
-        
-        <View style={styles.settingRow}>
-          <View style={styles.settingLeft}>
-            <Vibrate size={24} color={COLORS.textSecondary} />
-            <View style={styles.settingTextContainer}>
-              <Text style={styles.settingTitle}>Haptic Feedback</Text>
-              <Text style={styles.settingDescription}>
-                Enable vibration feedback when interacting
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={settings.hapticFeedback}
-            onValueChange={toggleHapticFeedback}
-            trackColor={{ false: COLORS.backgroundLight, true: COLORS.accent }}
-            thumbColor={COLORS.textPrimary}
-          />
         </View>
+        <Switch
+          value={settings.pinCodeEnabled}
+          onValueChange={async (value) => {
+            await lightHaptic();
+            const updatedSettings = { ...settings, pinCodeEnabled: value };
+            if (!value) {
+        updatedSettings.secureWithBiometrics = false;
+            }
+            await updateSettings(updatedSettings);
+          }}
+          trackColor={{ false: COLORS.backgroundLight, true: COLORS.accent }}
+          thumbColor={COLORS.textPrimary}
+        />
+      </View>
         
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>

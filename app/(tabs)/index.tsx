@@ -8,21 +8,25 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
-import { useRouter, useFocusEffect, Stack } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import type { LoyaltyCard } from '@/utils/types';
 import { loadCards } from '@/utils/storage';
 import { COLORS } from '@/constants/Colors';
 import LoyaltyCardComponent from '@/components/LoyaltyCard';
-import { Plus } from 'lucide-react-native';
+import { Plus, ArrowUpDown } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '@/components/Header';
+import EmptyState from '@/components/EmptyState';
 
-type CardItem = LoyaltyCard | { id: string; isAddButton: true };
+type SortType = 'name' | 'date' | 'lastUsed';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [cards, setCards] = useState<LoyaltyCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [sortType, setSortType] = useState<SortType>('name');
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   const loadCardData = useCallback(async () => {
     try {
@@ -51,6 +55,54 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
+  const sortCards = (cards: LoyaltyCard[]) => {
+    switch (sortType) {
+      case 'name':
+        return [...cards].sort((a, b) => a.name.localeCompare(b.name));
+      case 'date':
+        return [...cards].sort((a, b) => b.dateAdded - a.dateAdded);
+      case 'lastUsed':
+        return [...cards].sort((a, b) => {
+          if (!a.lastUsed) return 1;
+          if (!b.lastUsed) return -1;
+          return b.lastUsed - a.lastUsed;
+        });
+      default:
+        return cards;
+    }
+  };
+
+  const sortedCards = sortCards(cards);
+
+  const SortMenu = () => (
+    <View style={[styles.sortMenu, !showSortMenu && styles.hidden]}>
+      <TouchableOpacity 
+        style={styles.sortOption} 
+        onPress={() => {
+          setSortType('name');
+          setShowSortMenu(false);
+        }}>
+        <Text style={styles.sortOptionText}>Sort by Name</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.sortOption}
+        onPress={() => {
+          setSortType('date');
+          setShowSortMenu(false);
+        }}>
+        <Text style={styles.sortOptionText}>Sort by Date Added</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.sortOption}
+        onPress={() => {
+          setSortType('lastUsed');
+          setShowSortMenu(false);
+        }}>
+        <Text style={styles.sortOptionText}>Sort by Last Used</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -59,83 +111,48 @@ export default function HomeScreen() {
     );
   }
 
-  // split favorites vs others
-  const favorites = cards.filter(c => c.isFavorite);
-  const others = cards.filter(c => !c.isFavorite);
-
-  // append the Add‐button tile
-  const items: CardItem[] = [
-    ...others,
-    { id: 'ADD_CARD', isAddButton: true },
-  ];
-
-  const renderItem = ({ item }: { item: CardItem }) => {
-    if ('isAddButton' in item) {
-      return (
-        <TouchableOpacity
-          style={[styles.tile, styles.addTile]}
-          onPress={() => router.push('/add')}
-          activeOpacity={0.7}
-        >
-          <Plus size={32} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-      );
-    }
-    return (
-      <LoyaltyCardComponent
-        card={item}
-        onPress={() => router.push(`/card/${item.id}`)}
-      />
-    );
-  };
-
-  // header component that renders the favorites grid
-  const ListHeader = () =>
-    favorites.length > 0 ? (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Favorites</Text>
-        <View style={styles.grid}>
-          {favorites.map(card => (
-            <View style={styles.gridItem} key={card.id}>
-              <LoyaltyCardComponent
-                card={card}
-                onPress={() => router.push(`/card/${card.id}`)}
-              />
-            </View>
-          ))}
-        </View>
-      </View>
-    ) : null;
-
   return (
-    <>
-     <SafeAreaView style={styles.container}>
-     <Stack.Screen
-        options={{
-          title: 'My Cards',
-          headerStyle: { backgroundColor: COLORS.backgroundDark },
-          headerTitleStyle: { color: COLORS.textPrimary },
-          headerTintColor: COLORS.textPrimary,
-        }}
-      />
-      <FlatList
-        data={items}
-        keyExtractor={item => item.id}
-        numColumns={2}
-        ListHeaderComponent={ListHeader}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={COLORS.accent}
-            colors={[COLORS.accent]}
-          />
+    <SafeAreaView style={styles.container}>
+      <Header 
+        title="Card Collection" 
+        showBack={false}
+        rightElement={
+          <TouchableOpacity 
+            style={styles.sortButton}
+            onPress={() => setShowSortMenu(!showSortMenu)}
+          >
+            <ArrowUpDown size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
         }
       />
-      </SafeAreaView>
-    </>
+      
+      <SortMenu />
+      
+      {cards.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <FlatList
+          data={sortedCards}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          renderItem={({ item }) => (
+            <LoyaltyCardComponent
+              card={item}
+              onPress={() => router.push(`/card/${item.id}`)}
+            />
+          )}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.accent}
+              colors={[COLORS.accent]}
+            />
+          }
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -146,7 +163,6 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 8,
-    backgroundColor: COLORS.backgroundDark,
   },
   center: {
     flex: 1,
@@ -154,36 +170,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.backgroundDark,
   },
-  section: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 18,
-    fontWeight: '600',
-    marginHorizontal: 8,
-    marginBottom: 8,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -8,
-  },
-  gridItem: {
-    width: '50%',
+  sortButton: {
     padding: 8,
   },
-  tile: {
-    flex: 1,
-    margin: 8,
-    height: 120,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addTile: {
+  sortMenu: {
+    position: 'absolute',
+    top: 60,
+    right: 16,
     backgroundColor: COLORS.backgroundMedium,
-    borderWidth: 1,
-    borderColor: COLORS.textSecondary,
+    borderRadius: 8,
+    padding: 8,
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  hidden: {
+    display: 'none',
+  },
+  sortOption: {
+    padding: 12,
+    borderRadius: 4,
+  },
+  sortOptionText: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
   },
 });

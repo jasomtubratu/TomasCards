@@ -7,16 +7,18 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { ArrowLeft, CreditCard as Edit2 } from 'lucide-react-native';
+import { Pencil, Trash2 } from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { LoyaltyCard } from '@/utils/types';
-import { getCard, updateCard } from '@/utils/storage';
+import { getCard, updateCard, deleteCard } from '@/utils/storage';
 import { COLORS } from '@/constants/Colors';
 import BarcodeRenderer from '@/components/BarcodeRenderer';
 import CardForm from '@/components/CardForm';
+import Header from '@/components/Header';
 
 export default function CardDetailScreen() {
   const router = useRouter();
@@ -52,8 +54,30 @@ export default function CardDetailScreen() {
     setIsEditing(false);
   };
 
-  const toggleEditMode = () => setIsEditing(v => !v);
-  const handleBack = () => router.back();
+  const handleDeleteCard = async () => {
+    const confirmDelete = () => {
+      if (id) {
+        deleteCard(id).then(() => {
+          router.replace('/');
+        });
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (confirm('Are you sure you want to delete this card?')) {
+        confirmDelete();
+      }
+    } else {
+      Alert.alert(
+        'Delete Card',
+        'Are you sure you want to delete this card? This action cannot be undone.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', onPress: confirmDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -67,7 +91,7 @@ export default function CardDetailScreen() {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>Card not found</Text>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -77,45 +101,24 @@ export default function CardDetailScreen() {
   if (isEditing) {
     return (
       <>
-        <Stack.Screen
-          options={{
-            headerShown: true,
-            headerStyle: { backgroundColor: COLORS.backgroundDark },
-            headerTitleStyle: { color: COLORS.textPrimary },
-            headerTintColor: COLORS.textPrimary,
-            title: 'Edit Card',
-            headerLeft: () => (
-              <TouchableOpacity onPress={() => setIsEditing(false)} style={{ marginLeft: 12 }}>
-                <ArrowLeft size={24} color={COLORS.textPrimary} />
-              </TouchableOpacity>
-            ),
-          }}
+          <View style={styles.mainContainer}>
+
+        <Header
+          title="Edit Card"
+          showBack={true}
+          onBack={() => setIsEditing(false)}
         />
         <CardForm existingCard={card} onSave={handleUpdateCard} />
+          </View>
       </>
     );
   }
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: COLORS.backgroundDark },
-          headerTitleStyle: { color: COLORS.textPrimary },
-          headerTintColor: COLORS.textPrimary,
-          title: card.name,
-          headerLeft: () => (
-            <TouchableOpacity onPress={handleBack} style={{ marginLeft: 12 }}>
-              <ArrowLeft size={24} color={COLORS.textPrimary} />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <TouchableOpacity onPress={toggleEditMode} style={{ marginRight: 12 }}>
-              <Edit2 size={24} color={COLORS.textPrimary} />
-            </TouchableOpacity>
-          ),
-        }}
+    <View style={styles.mainContainer}>
+      <Header
+        title={card.name}
+        showBack={true}
       />
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.cardHeader}>
@@ -148,6 +151,25 @@ export default function CardDetailScreen() {
           </View>
         ) : null}
 
+
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => setIsEditing(true)}
+          >
+            <Pencil size={20} color={COLORS.textPrimary} />
+            <Text style={styles.buttonText}>Edit Card</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDeleteCard}
+          >
+            <Trash2 size={20} color={COLORS.error} />
+            <Text style={styles.deleteButtonText}>Delete Card</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
             Added: {new Date(card.dateAdded).toLocaleDateString()}
@@ -159,26 +181,135 @@ export default function CardDetailScreen() {
           )}
         </View>
       </ScrollView>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
-  contentContainer: { padding: 16 },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.backgroundDark, padding: 16 },
-  errorText: { fontSize: 18, color: COLORS.error, marginBottom: 24 },
-  backButton: { backgroundColor: COLORS.backgroundMedium, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8 },
-  backButtonText: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '600' },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  logoPlaceholder: { width: 56, height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  logoPlaceholderText: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '700' },
-  cardName: { fontSize: 24, fontWeight: '700', color: COLORS.textPrimary },
-  codeContainer: { alignItems: 'center', marginBottom: 24 },
-  codeText: { fontSize: 16, color: COLORS.textSecondary, marginTop: 16, letterSpacing: 1, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' },
-  notesContainer: { backgroundColor: COLORS.backgroundMedium, borderRadius: 12, padding: 16, marginBottom: 24 },
-  notesTitle: { fontSize: 16, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 8 },
-  notesText: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
-  infoContainer: { marginBottom: 24 },
-  infoText: { fontSize: 14, color: COLORS.textHint, marginBottom: 4 },
+  mainContainer: {
+    flex: 1,
+    backgroundColor: COLORS.backgroundDark,
+    paddingTop: Platform.OS === 'ios' ? 48 : 24,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.backgroundDark,
+  },
+  contentContainer: {
+    padding: 16,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.backgroundDark,
+    padding: 16,
+  },
+  errorText: {
+    fontSize: 18,
+    color: COLORS.error,
+    marginBottom: 24,
+  },
+  backButton: {
+    backgroundColor: COLORS.backgroundMedium,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  logoPlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  logoPlaceholderText: {
+    color: COLORS.textPrimary,
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  cardName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  codeContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  codeText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    marginTop: 16,
+    letterSpacing: 1,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  notesContainer: {
+    backgroundColor: COLORS.backgroundMedium,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  notesTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  notesText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+  },
+  infoContainer: {
+    marginTop: 24,
+  },
+  infoText: {
+    fontSize: 14,
+    color: COLORS.textHint,
+    marginBottom: 4,
+  },
+  actionButtons: {
+    gap: 12,
+    marginTop: 8,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.backgroundMedium,
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.backgroundMedium,
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  buttonText: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButtonText: {
+    color: COLORS.error,
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });

@@ -127,71 +127,16 @@ const CardForm: React.FC<CardFormProps> = ({
           <View style={styles.codeInputContainer}>
             <TextInput
               style={styles.codeInput}
+              editable={false}
               value={code}
               onChangeText={setCode}
               placeholder="Enter card number or scan"
               placeholderTextColor={COLORS.textHint}
               keyboardType="default"
             />
-            <TouchableOpacity 
-              style={[
-                styles.scanButton,
-                Platform.OS === 'web' && styles.scanButtonDisabled
-              ]}
-              onPress={handleScanPress}
-              disabled={Platform.OS === 'web'}
-            >
-              <Camera size={20} color={Platform.OS === 'web' ? COLORS.textHint : COLORS.textPrimary} />
-            </TouchableOpacity>
           </View>
-          {Platform.OS === 'web' && (
-            <Text style={styles.webNotice}>Camera scanning is not available on web</Text>
-          )}
         </View>
         
-        {/* Code Type Selection */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Code Type</Text>
-          <View style={styles.codeTypeContainer}>
-            <TouchableOpacity
-              style={[
-                styles.codeTypeButton,
-                codeType === 'barcode' && styles.codeTypeButtonActive,
-              ]}
-              onPress={() => setCodeType('barcode')}
-            >
-              <BarChart4 
-                size={20} 
-                color={codeType === 'barcode' ? COLORS.accent : COLORS.textSecondary} 
-              />
-              <Text style={[
-                styles.codeTypeText,
-                codeType === 'barcode' && styles.codeTypeTextActive,
-              ]}>
-                Barcode
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.codeTypeButton,
-                codeType === 'qrcode' && styles.codeTypeButtonActive,
-              ]}
-              onPress={() => setCodeType('qrcode')}
-            >
-              <QrCode 
-                size={20} 
-                color={codeType === 'qrcode' ? COLORS.accent : COLORS.textSecondary} 
-              />
-              <Text style={[
-                styles.codeTypeText,
-                codeType === 'qrcode' && styles.codeTypeTextActive,
-              ]}>
-                QR Code
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
         
         {/* Card Color */}
         <View style={styles.inputGroup}>
