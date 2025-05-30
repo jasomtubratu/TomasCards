@@ -14,10 +14,7 @@ import { Stack, useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 
 import { COLORS } from '@/constants/Colors';
-
-const POPULAR_CARDS = [
-  { id: 'kaufland',    name: 'Kaufland',    logo: require('@/assets/logos/kaufland.png') },
-];
+import POPULAR_CARDS from '@/assets/cards.json';
 
 export default function AddCardScreen() {
   const router = useRouter();
@@ -72,7 +69,7 @@ export default function AddCardScreen() {
               onPress={() => handleSelect(item.id)}
               activeOpacity={0.7}
             >
-              <Image source={item.logo} style={styles.logo} />
+              <Image source={{ uri: item.logo }} style={styles.logo} />
               <Text style={styles.itemText}>{item.name}</Text>
             </TouchableOpacity>
           )}

@@ -13,18 +13,7 @@ import { ArrowLeft, X } from 'lucide-react-native';
 import { COLORS } from '@/constants/Colors';
 import { addCard } from '@/utils/storage';
 import type { LoyaltyCard } from '@/utils/types';
-
-// Typed list of stores for lookup
-const POPULAR_CARDS: { id: string; name: string }[] = [
-  { id: 'kaufland',   name: 'Kaufland' },
-  { id: 'lidl',       name: 'Lidl' },
-  { id: 'coop',       name: 'COOP Jednota' },
-  { id: 'teta',       name: 'TETA' },
-  { id: 'dracik',     name: 'Dráčik' },
-  { id: 'kik',        name: 'KIK' },
-  { id: 'sportisimo', name: 'Sportisimo' },
-  { id: 'nay',        name: 'NAY' },
-];
+import POPULAR_CARDS from '@/assets/cards.json';
 
 export default function ManualEntryScreen() {
   const router = useRouter();
@@ -49,12 +38,11 @@ export default function ManualEntryScreen() {
       id: Date.now().toString(),
       name,
       code,
-      codeType: 'barcode',
+      codeType: (meta?.type as 'barcode' | 'qrcode') ?? 'barcode',
       color,
       dateAdded: Date.now(),
     };
     await addCard(newCard);
-    // navigate into the detail screen
     router.replace(`/card/${newCard.id}`);
   };
 
@@ -67,12 +55,19 @@ export default function ManualEntryScreen() {
           <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
             <ArrowLeft size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.title}>{name}</Text>
+
+          <Text style={styles.title}>
+            {store?.toUpperCase() || 'Scan'}
+          </Text>
+
           <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
             <X size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
         </View>
 
+        <Text style={styles.title}>
+          Manuálne pridanie karty
+        </Text>
         <Text style={styles.instruction}>
           Zadaj čiarový kód svojej karty ručne
         </Text>
@@ -123,8 +118,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: COLORS.textPrimary,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
+    paddingBottom: 8,
   },
   instruction: {
     color: COLORS.textSecondary,

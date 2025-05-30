@@ -10,23 +10,28 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, X } from 'lucide-react-native';
 import { COLORS } from '@/constants/Colors';
 import CodeScanner from '@/components/CodeScanner';
+import { addCard } from '@/utils/storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ScanScreen() {
   const router = useRouter();
   const { store } = useLocalSearchParams<{ store?: string }>();
   const [scanned, setScanned] = useState(false);
 
-  const handleCodeScanned = (data: string, type: 'barcode' | 'qrcode') => {
+  const handleCodeScanned = async (data: string, type: 'barcode' | 'qrcode') => {
     if (scanned) return;
     setScanned(true);
-    router.push({ 
-      pathname: '/add/manual',
-      params: { 
-        code: data,
-        store,
-        type 
-      }
-    });
+    const newCard = {
+      id: Date.now().toString(),
+      name: store || 'Unknown Store',
+      code: data,
+      codeType: type,
+      color: COLORS.accent,
+      dateAdded: Date.now(),
+    };
+    await addCard(newCard);
+    // Navigate to the card detail screen with the new card data
+    router.replace(`/card/${newCard.id}`);
   };
 
   const handleManual = () => {
@@ -40,7 +45,7 @@ export default function ScanScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
             <ArrowLeft size={24} color={COLORS.textPrimary} />
@@ -68,7 +73,7 @@ export default function ScanScreen() {
         <TouchableOpacity style={styles.manualBtn} onPress={handleManual}>
           <Text style={styles.manualBtnText}>Enter Manually</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     </>
   );
 }
@@ -79,13 +84,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backgroundDark,
     alignItems: 'center',
     paddingTop: Platform.OS === 'android' ? 48 : 0,
+    paddingHorizontal: 16,
   },
   header: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   iconBtn: {
     padding: 8,
