@@ -14,6 +14,7 @@ import { loadCards } from '@/utils/storage';
 import { COLORS } from '@/constants/Colors';
 import LoyaltyCardComponent from '@/components/LoyaltyCard';
 import { Plus } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type CardItem = LoyaltyCard | { id: string; isAddButton: true };
 
@@ -108,7 +109,8 @@ export default function HomeScreen() {
 
   return (
     <>
-      <Stack.Screen
+     <SafeAreaView style={styles.container}>
+     <Stack.Screen
         options={{
           title: 'My Cards',
           headerStyle: { backgroundColor: COLORS.backgroundDark },
@@ -132,11 +134,16 @@ export default function HomeScreen() {
           />
         }
       />
+      </SafeAreaView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.backgroundDark,
+  },
   list: {
     padding: 8,
     backgroundColor: COLORS.backgroundDark,
