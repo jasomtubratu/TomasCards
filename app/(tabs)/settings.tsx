@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Switch, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
   ScrollView,
   Alert,
   Platform
 } from 'react-native';
-import { Import as SortAsc, Vibrate, Fingerprint, Trash2, Coffee, Info } from 'lucide-react-native';
+import { Import as SortAsc, Vibrate, Fingerprint, Trash2, Coffee, Info, User } from 'lucide-react-native';
 import { AppSettings, SortOption } from '@/utils/types';
 import { loadSettings, saveSettings, loadCards, saveCards } from '@/utils/storage';
 import { COLORS } from '@/constants/Colors';
@@ -21,7 +21,7 @@ export default function SettingsScreen() {
     hapticFeedback: true,
     secureWithBiometrics: false,
   });
-  
+
   // Load settings
   useEffect(() => {
     const fetchSettings = async () => {
@@ -30,26 +30,26 @@ export default function SettingsScreen() {
     };
     fetchSettings();
   }, []);
-  
+
   // Update settings when changes are made
   const updateSettings = async (newSettings: AppSettings) => {
     setSettings(newSettings);
     await saveSettings(newSettings);
   };
-  
+
   // Toggle sort option
   const toggleSortOption = async () => {
     await lightHaptic();
     const options: SortOption[] = ['alphabetical', 'recent', 'lastUsed'];
     const currentIndex = options.indexOf(settings.sortOption);
     const nextIndex = (currentIndex + 1) % options.length;
-    
+
     await updateSettings({
       ...settings,
       sortOption: options[nextIndex],
     });
   };
-  
+
   // Toggle haptic feedback
   const toggleHapticFeedback = async () => {
     await lightHaptic();
@@ -58,30 +58,30 @@ export default function SettingsScreen() {
       hapticFeedback: !settings.hapticFeedback,
     });
   };
-  
+
   // Toggle biometric security
   const toggleBiometricSecurity = async () => {
     await lightHaptic();
-    
+
     // In a real app, we would check if biometrics are available here
-    
+
     await updateSettings({
       ...settings,
       secureWithBiometrics: !settings.secureWithBiometrics,
     });
   };
-  
+
   // Delete all cards
   const confirmDeleteAllCards = async () => {
     await mediumHaptic();
-    
+
     if (Platform.OS === 'web') {
       if (confirm('Are you sure you want to delete all loyalty cards? This action cannot be undone.')) {
         await deleteAllCards();
       }
       return;
     }
-    
+
     Alert.alert(
       'Delete All Cards',
       'Are you sure you want to delete all loyalty cards? This action cannot be undone.',
@@ -98,68 +98,40 @@ export default function SettingsScreen() {
       ]
     );
   };
-  
+
   // Delete all cards
   const deleteAllCards = async () => {
     await saveCards([]);
     await mediumHaptic();
   };
-  
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Preferences Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Security</Text>
-        
-      <View style={styles.settingRow}>
-        <View style={styles.settingLeft}>
-          <Fingerprint size={24} color={COLORS.textSecondary} />
-          <View style={styles.settingTextContainer}>
-            <Text style={styles.settingTitle}>PIN Code Unlock</Text>
-            <Text style={styles.settingDescription}>
-        Enable PIN code to unlock the app
-            </Text>
-          </View>
-        </View>
-        <Switch
-          value={settings.pinCodeEnabled}
-          onValueChange={async (value) => {
-            await lightHaptic();
-            const updatedSettings = { ...settings, pinCodeEnabled: value };
-            if (!value) {
-        updatedSettings.secureWithBiometrics = false;
-            }
-            await updateSettings(updatedSettings);
-          }}
-          trackColor={{ false: COLORS.backgroundLight, true: COLORS.accent }}
-          thumbColor={COLORS.textPrimary}
-        />
-      </View>
-        
+        <Text style={styles.sectionTitle}>My Account</Text>
+
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
-            <Fingerprint size={24} color={COLORS.textSecondary} />
+            <User size={24} color={COLORS.textSecondary} />
             <View style={styles.settingTextContainer}>
-              <Text style={styles.settingTitle}>Biometric Security</Text>
+              <Text style={styles.settingTitle}>
+                Log In / Sign Up
+              </Text>
               <Text style={styles.settingDescription}>
-                Require authentication to access cards
+                Manage your account and sync cards across devices
               </Text>
             </View>
           </View>
-          <Switch
-            value={settings.secureWithBiometrics}
-            onValueChange={toggleBiometricSecurity}
-            trackColor={{ false: COLORS.backgroundLight, true: COLORS.accent }}
-            thumbColor={COLORS.textPrimary}
-          />
         </View>
+
       </View>
-      
+
       {/* Data Management Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Data Management</Text>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.settingRow}
           onPress={confirmDeleteAllCards}
         >
@@ -174,30 +146,30 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
       </View>
-      
+
       {/* About Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>About</Text>
-        
+
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
             <Info size={24} color={COLORS.textSecondary} />
             <View style={styles.settingTextContainer}>
               <Text style={styles.settingTitle}>Version</Text>
               <Text style={styles.settingDescription}>
-                Loyalty Card Wallet v1.0.0
+                TomasCards v1.0.0 ALPHA
               </Text>
             </View>
           </View>
         </View>
-        
+
         <TouchableOpacity style={styles.settingRow}>
           <View style={styles.settingLeft}>
             <Coffee size={24} color={COLORS.textSecondary} />
             <View style={styles.settingTextContainer}>
               <Text style={styles.settingTitle}>Support Development</Text>
               <Text style={styles.settingDescription}>
-                Help keep this app ad-free
+                Help keep this app ad-free. Your support is appreciated! 
               </Text>
             </View>
           </View>
@@ -211,6 +183,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundDark,
+    paddingTop: Platform.OS === 'ios' ? 48 : 0,
+    
   },
   content: {
     padding: 16,

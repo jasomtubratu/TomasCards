@@ -1,9 +1,0 @@
-[
-    { 
-        "id": "kaufland",
-        "name": "Kaufland",
-        "logo": "kaufland.png",
-        "type": "barcode",
-        "color": "red"
-    }
-]

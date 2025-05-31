@@ -22,18 +22,6 @@ interface CardFormProps {
   onCancel?: () => void;
 }
 
-// Card color options
-const colorOptions = [
-  '#4F6BFF', // accent blue
-  '#4CAF93', // success green
-  '#F2BD6E', // warning yellow
-  '#F46E6E', // error red
-  '#9D66FF', // purple
-  '#FF66A0', // pink
-  '#66B3FF', // light blue
-  '#66FFB3', // mint
-];
-
 const CardForm: React.FC<CardFormProps> = ({ 
   existingCard, 
   onSave,
@@ -46,7 +34,6 @@ const CardForm: React.FC<CardFormProps> = ({
   const [codeType, setCodeType] = useState<'barcode' | 'qrcode'>(
     existingCard?.codeType || 'barcode'
   );
-  const [color, setColor] = useState(existingCard?.color || colorOptions[0]);
   const [notes, setNotes] = useState(existingCard?.notes || '');
 
   // Handle form submission
@@ -63,7 +50,7 @@ const CardForm: React.FC<CardFormProps> = ({
         name: name.trim(),
         code: code.trim(),
         codeType,
-        color,
+        color : existingCard?.color || COLORS.accent,
         notes: notes.trim(),
         dateAdded: existingCard?.dateAdded || Date.now(),
         lastUsed: existingCard?.lastUsed,
@@ -109,17 +96,6 @@ const CardForm: React.FC<CardFormProps> = ({
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Card Name */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Card Name</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Enter store or brand name"
-            placeholderTextColor={COLORS.textHint}
-          />
-        </View>
         
         {/* Card Code */}
         <View style={styles.inputGroup}>
@@ -138,23 +114,6 @@ const CardForm: React.FC<CardFormProps> = ({
         </View>
         
         
-        {/* Card Color */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Card Color</Text>
-          <View style={styles.colorOptionsContainer}>
-            {colorOptions.map((colorOption) => (
-              <TouchableOpacity
-                key={colorOption}
-                style={[
-                  styles.colorOption,
-                  { backgroundColor: colorOption },
-                  color === colorOption && styles.colorOptionSelected,
-                ]}
-                onPress={() => setColor(colorOption)}
-              />
-            ))}
-          </View>
-        </View>
         
         {/* Notes */}
         <View style={styles.inputGroup}>
@@ -189,7 +148,7 @@ const CardForm: React.FC<CardFormProps> = ({
             disabled={!name.trim() || !code.trim() || loading}
           >
             {loading ? (
-              <ActivityIndicator size="small\" color={COLORS.textPrimary} />
+              <ActivityIndicator size="small" color={COLORS.textPrimary} />
             ) : (
               <>
                 <Save size={20} color={COLORS.textPrimary} />

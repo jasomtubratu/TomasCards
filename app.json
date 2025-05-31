@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
-    "version": "1.0.0",
+    "name": "TomasCards",
+    "slug": "tomas-cards",
+    "version": "1.0.0-APHA",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -11,12 +11,15 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "This app needs camera access to scan barcodes and QR codes.",
-        "NSMicrophoneUsageDescription": "This app needs microphone access for camera functionality."
-      }
+        "NSCameraUsageDescription": "This app needs camera access to scan barcodes and QR codes."
+      },
+      "bundleIdentifier": "com.anonymous.tomas-cards"
     },
     "android": {
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -27,10 +30,13 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      ["expo-camera", {
-        "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-        "recordAudioAndroid": false
-      }]
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+          "recordAudioAndroid": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

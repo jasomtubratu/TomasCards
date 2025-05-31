@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   FlatList,
@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import type { LoyaltyCard } from '@/utils/types';
@@ -27,6 +29,9 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [sortType, setSortType] = useState<SortType>('name');
   const [showSortMenu, setShowSortMenu] = useState(false);
+
+  // Animated value for showing/hiding sort menu
+  const menuAnimation = useRef(new Animated.Value(0)).current;
 
   const loadCardData = useCallback(async () => {
     try {
@@ -74,34 +79,96 @@ export default function HomeScreen() {
 
   const sortedCards = sortCards(cards);
 
-  const SortMenu = () => (
-    <View style={[styles.sortMenu, !showSortMenu && styles.hidden]}>
-      <TouchableOpacity 
-        style={styles.sortOption} 
-        onPress={() => {
-          setSortType('name');
-          setShowSortMenu(false);
-        }}>
-        <Text style={styles.sortOptionText}>Sort by Name</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={styles.sortOption}
-        onPress={() => {
-          setSortType('date');
-          setShowSortMenu(false);
-        }}>
-        <Text style={styles.sortOptionText}>Sort by Date Added</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={styles.sortOption}
-        onPress={() => {
-          setSortType('lastUsed');
-          setShowSortMenu(false);
-        }}>
-        <Text style={styles.sortOptionText}>Sort by Last Used</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // Animate menu in/out
+  useEffect(() => {
+    Animated.timing(menuAnimation, {
+      toValue: showSortMenu ? 1 : 0,
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  }, [showSortMenu, menuAnimation]);
+
+  // The animated SortMenu
+  const SortMenu = () => {
+    const scale = menuAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.8, 1],
+    });
+
+    return (
+      <Animated.View
+        style={[
+          styles.sortMenu,
+          {
+            opacity: menuAnimation,
+            transform: [{ scale }],
+          },
+          showSortMenu ? {} : { pointerEvents: 'none' },
+        ]}
+      >
+        <TouchableOpacity
+          style={[
+            styles.sortOption,
+            sortType === 'name' && styles.sortOptionSelected,
+          ]}
+          onPress={() => {
+            setSortType('name');
+            setShowSortMenu(false);
+          }}
+        >
+          <Text
+            style={[
+              styles.sortOptionText,
+              sortType === 'name' && styles.sortOptionTextSelected,
+            ]}
+          >
+            Sort by Name
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.sortOption,
+            sortType === 'date' && styles.sortOptionSelected,
+          ]}
+          onPress={() => {
+            setSortType('date');
+            setShowSortMenu(false);
+          }}
+        >
+          <Text
+            style={[
+              styles.sortOptionText,
+              sortType === 'date' && styles.sortOptionTextSelected,
+            ]}
+          >
+            Sort by Date Added
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.sortOption,
+            sortType === 'lastUsed' && styles.sortOptionSelected,
+          ]}
+          onPress={() => {
+            setSortType('lastUsed');
+            setShowSortMenu(false);
+          }}
+        >
+          <Text
+            style={[
+              styles.sortOptionText,
+              sortType === 'lastUsed' && styles.sortOptionTextSelected,
+            ]}
+          >
+            Sort by Last Used
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
 
   if (loading) {
     return (
@@ -113,27 +180,39 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header 
-        title="Card Collection" 
+      <Header
+        title="Card Collection"
         showBack={false}
         rightElement={
-          <TouchableOpacity 
-            style={styles.sortButton}
-            onPress={() => setShowSortMenu(!showSortMenu)}
-          >
-            <ArrowUpDown size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+          // Wrap both Sort and Add icons in a row
+          <View style={styles.headerIconsContainer}>
+            {/* Sort button */}
+            <TouchableOpacity
+              style={styles.headerIconTouch}
+              onPress={() => setShowSortMenu((prev) => !prev)}
+            >
+              <ArrowUpDown size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+
+            {/* Add button */}
+            <TouchableOpacity
+              style={[styles.headerIconTouch, styles.addButton]}
+              onPress={() => router.push('/add')}
+            >
+              <Plus size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+          </View>
         }
       />
-      
+
       <SortMenu />
-      
+
       {cards.length === 0 ? (
         <EmptyState />
       ) : (
         <FlatList
           data={sortedCards}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           numColumns={2}
           renderItem={({ item }) => (
             <LoyaltyCardComponent
@@ -170,9 +249,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.backgroundDark,
   },
-  sortButton: {
+
+  // Wrap icons in a row
+  headerIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // Touchable area for each icon
+  headerIconTouch: {
     padding: 8,
   },
+  // (Optional) Extra spacing before the Add button
+  addButton: {
+    marginLeft: 12,
+  },
+
   sortMenu: {
     position: 'absolute',
     top: 60,
@@ -187,9 +278,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  hidden: {
-    display: 'none',
-  },
   sortOption: {
     padding: 12,
     borderRadius: 4,
@@ -197,5 +285,11 @@ const styles = StyleSheet.create({
   sortOptionText: {
     color: COLORS.textPrimary,
     fontSize: 16,
+  },
+  sortOptionSelected: {
+    backgroundColor: COLORS.accent,
+  },
+  sortOptionTextSelected: {
+    color: COLORS.backgroundDark,
   },
 });

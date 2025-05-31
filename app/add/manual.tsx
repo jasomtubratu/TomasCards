@@ -13,7 +13,7 @@ import { ArrowLeft, X } from 'lucide-react-native';
 import { COLORS } from '@/constants/Colors';
 import { addCard } from '@/utils/storage';
 import type { LoyaltyCard } from '@/utils/types';
-import POPULAR_CARDS from '@/assets/cards.json';
+import { POPULAR_CARDS } from '@/assets/cards';
 
 export default function ManualEntryScreen() {
   const router = useRouter();
