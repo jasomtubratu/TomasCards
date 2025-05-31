@@ -103,7 +103,6 @@ const CardForm: React.FC<CardFormProps> = ({
           <View style={styles.codeInputContainer}>
             <TextInput
               style={styles.codeInput}
-              editable={false}
               value={code}
               onChangeText={setCode}
               placeholder="Enter card number or scan"

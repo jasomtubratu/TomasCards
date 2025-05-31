@@ -8,9 +8,11 @@ import {
   ScrollView,
   Platform,
   Alert,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { Pencil, Trash2 } from 'lucide-react-native';
+import { Pencil, Star, Trash2, X } from 'lucide-react-native'; // Added X for close icon
 import QRCode from 'react-native-qrcode-svg';
 
 import { LoyaltyCard } from '@/utils/types';
@@ -73,9 +75,17 @@ export default function CardDetailScreen() {
         'Are you sure you want to delete this card? This action cannot be undone.',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', onPress: confirmDelete, style: 'destructive' }
+          { text: 'Delete', onPress: confirmDelete, style: 'destructive' },
         ]
       );
+    }
+  };
+
+  const toggleFavorite = async () => {
+    if (card) {
+      const updatedCard = { ...card, isFavorite: !card.isFavorite };
+      await updateCard(updatedCard);
+      setCard(updatedCard);
     }
   };
 
@@ -98,31 +108,28 @@ export default function CardDetailScreen() {
     );
   }
 
-  if (isEditing) {
-    return (
-      <>
-          <View style={styles.mainContainer}>
-
-        <Header
-          title="Edit Card"
-          showBack={true}
-          onBack={() => setIsEditing(false)}
-        />
-        <CardForm existingCard={card} onSave={handleUpdateCard} />
-          </View>
-      </>
-    );
-  }
-
   return (
     <View style={styles.mainContainer}>
+      {/* --- Header bar for the detail screen --- */}
       <Header
         title={card.name}
         showBack={true}
+        onBack={() => router.back()}
+        rightElement={
+          <TouchableOpacity onPress={toggleFavorite} style={styles.favoriteButton}>
+            <Star
+              size={24}
+              color={COLORS.textPrimary}
+              fill={card.isFavorite ? COLORS.textPrimary : 'none'}
+            />
+          </TouchableOpacity>
+        }
       />
+
+      {/* --- Main Card Detail Content --- */}
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.cardHeader}>
-          <View style={[styles.logoPlaceholder, { backgroundColor: card.color }]}>  
+          <View style={[styles.logoPlaceholder, { backgroundColor: card.color }]}>
             <Text style={styles.logoPlaceholderText}>
               {card.name.charAt(0).toUpperCase()}
             </Text>
@@ -151,7 +158,6 @@ export default function CardDetailScreen() {
           </View>
         ) : null}
 
-
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={styles.editButton}
@@ -160,11 +166,8 @@ export default function CardDetailScreen() {
             <Pencil size={20} color={COLORS.textPrimary} />
             <Text style={styles.buttonText}>Edit Card</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDeleteCard}
-          >
+
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteCard}>
             <Trash2 size={20} color={COLORS.error} />
             <Text style={styles.deleteButtonText}>Delete Card</Text>
           </TouchableOpacity>
@@ -181,6 +184,32 @@ export default function CardDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* --- EDIT FORM AS A CENTERED MODAL --- */}
+      <Modal
+        visible={isEditing}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsEditing(false)}
+      >
+        {/* TouchableWithoutFeedback allows tapping outside to close */}
+        <TouchableWithoutFeedback onPress={() => setIsEditing(false)}>
+          <View style={styles.modalBackground} />
+        </TouchableWithoutFeedback>
+
+        <View style={styles.modalContainer}>
+          {/* Header inside modal with a 'Close' (X) button */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Edit Card</Text>
+            <TouchableOpacity onPress={() => setIsEditing(false)} style={styles.closeButton}>
+              <X size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* CardForm will call handleUpdateCard when saved */}
+          <CardForm existingCard={card} onSave={handleUpdateCard} />
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -204,6 +233,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.backgroundDark,
     padding: 16,
+  },
+  favoriteButton: {
+    padding: 8,
   },
   errorText: {
     fontSize: 18,
@@ -311,5 +343,43 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  /* ==========================
+     Modal styles 
+     ========================== */
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: '20%',
+    left: '5%',
+    right: '5%',
+    backgroundColor: COLORS.backgroundDark,
+    borderRadius: 16,
+    padding: 16,
+    maxHeight: '60%',
+    // Add a drop shadow on iOS/Android
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  closeButton: {
+    padding: 8,
   },
 });

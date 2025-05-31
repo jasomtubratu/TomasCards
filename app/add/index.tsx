@@ -11,12 +11,9 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { X } from 'lucide-react-native';
 
 import { COLORS } from '@/constants/Colors';
 import { POPULAR_CARDS } from '@/assets/cards';
-
-// Import your custom Header component (same one from HomeScreen)
 import Header from '@/components/Header';
 
 export default function AddCardScreen() {
@@ -33,10 +30,7 @@ export default function AddCardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header
-        title="Choose a Card"
-        showBack={true}
-      />
+      <Header title="Choose a Card" showBack={true} />
 
       <TextInput
         style={styles.searchInput}
@@ -59,7 +53,8 @@ export default function AddCardScreen() {
             onPress={() => handleSelect(item.id)}
             activeOpacity={0.7}
           >
-            <Image source={{ uri: item.logo }} style={styles.logo} />
+            {/* item.logo is already require(...)’d in assets/cards.ts */}
+            <Image source={item.logo} style={styles.logo} />
             <Text style={styles.itemText}>{item.name}</Text>
           </TouchableOpacity>
         )}
@@ -73,10 +68,6 @@ export default function AddCardScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerButton: {
-    marginLeft: 16,
-    marginRight: 8,
-  },
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundDark,

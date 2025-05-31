@@ -1,17 +1,18 @@
-interface Card {
-    id: string;
-    name: string;
-    logo: string;
-    type: 'barcode' | 'qrcode';
-    color: string;
-}
-
-export const POPULAR_CARDS: Card[] = [
-    { 
-        "id": "kaufland",
-        "name": "Kaufland",
-        "logo": "kaufland.png",
-        "type": "barcode",
-        "color": "red"
-    }
-]
+export interface Card {
+    id: string
+    name: string
+    logo: any 
+    type: 'barcode' | 'qrcode'
+    color: string
+  }
+  
+  export const POPULAR_CARDS: Card[] = [
+    {
+      id: 'kaufland',
+      name: 'Kaufland',
+      type: 'barcode',
+      color: 'red',
+      logo: require('./logos/kaufland.png'),
+    },
+  ]
+  
