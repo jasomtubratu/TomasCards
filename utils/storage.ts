@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   sortOption: 'alphabetical',
   hapticFeedback: true,
   secureWithBiometrics: false,
+  themeMode: 'system',
 };
 
 // Load all cards
@@ -77,17 +78,6 @@ export async function getCard(id: string): Promise<LoyaltyCard | null> {
   } catch (e) {
     console.error('Failed to get card', e);
     return null;
-  }
-}
-export async function getCards(): Promise<LoyaltyCard[]> {
-  const raw = await AsyncStorage.getItem('cards');
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as LoyaltyCard[];
-  } catch {
-    console.warn('Failed to parse stored cards, resetting.');
-    await AsyncStorage.removeItem('cards');
-    return [];
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -10,10 +10,10 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { Camera, Circle as XCircle, Save, ChartBar as BarChart4, QrCode } from 'lucide-react-native';
+import { XCircle, Save } from 'lucide-react-native';
 import { LoyaltyCard } from '@/utils/types';
-import { COLORS } from '@/constants/Colors';
 import { successHaptic, lightHaptic } from '@/utils/feedback';
+import { useTheme } from '@/hooks/useTheme';
 
 interface CardFormProps {
   existingCard?: LoyaltyCard;
@@ -28,6 +28,7 @@ const CardForm: React.FC<CardFormProps> = ({
   onScanPress,
   onCancel
 }) => {
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(existingCard?.name || '');
   const [code, setCode] = useState(existingCard?.code || '');
@@ -36,7 +37,6 @@ const CardForm: React.FC<CardFormProps> = ({
   );
   const [notes, setNotes] = useState(existingCard?.notes || '');
 
-  // Handle form submission
   const handleSubmit = async () => {
     if (!name.trim() || !code.trim()) {
       return;
@@ -50,7 +50,7 @@ const CardForm: React.FC<CardFormProps> = ({
         name: name.trim(),
         code: code.trim(),
         codeType,
-        color : existingCard?.color || COLORS.accent,
+        color: existingCard?.color || colors.accent,
         notes: notes.trim(),
         dateAdded: existingCard?.dateAdded || Date.now(),
         lastUsed: existingCard?.lastUsed,
@@ -67,22 +67,12 @@ const CardForm: React.FC<CardFormProps> = ({
     }
   };
 
-  // Handle scan button press
   const handleScanPress = async () => {
     if (Platform.OS !== 'web') {
       await lightHaptic();
     }
     if (Platform.OS !== 'web' && onScanPress) {
       onScanPress();
-    } else if (Platform.OS === 'web') {
-      console.log('Camera scanning is not supported on web platform');
-    }
-  };
-
-  // Handle cancel
-  const handleCancel = () => {
-    if (onCancel) {
-      onCancel();
     }
   };
 
@@ -92,66 +82,67 @@ const CardForm: React.FC<CardFormProps> = ({
       style={styles.keyboardAvoid}
     >
       <ScrollView 
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.backgroundDark }]}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        
-        {/* Card Code */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Card Code</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Card Code</Text>
           <View style={styles.codeInputContainer}>
             <TextInput
-              style={styles.codeInput}
+              style={[styles.codeInput, { 
+                backgroundColor: colors.backgroundMedium,
+                color: colors.textPrimary
+              }]}
               value={code}
               onChangeText={setCode}
               placeholder="Enter card number or scan"
-              placeholderTextColor={COLORS.textHint}
+              placeholderTextColor={colors.textHint}
               keyboardType="default"
             />
           </View>
         </View>
         
-        
-        
-        {/* Notes */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Notes (Optional)</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Notes (Optional)</Text>
           <TextInput
-            style={[styles.input, styles.notesInput]}
+            style={[styles.input, styles.notesInput, {
+              backgroundColor: colors.backgroundMedium,
+              color: colors.textPrimary
+            }]}
             value={notes}
             onChangeText={setNotes}
             placeholder="Add any additional information"
-            placeholderTextColor={COLORS.textHint}
+            placeholderTextColor={colors.textHint}
             multiline
             numberOfLines={3}
           />
         </View>
         
-        {/* Action Buttons */}
         <View style={styles.actions}>
           <TouchableOpacity 
-            style={styles.cancelButton}
-            onPress={handleCancel}
+            style={[styles.cancelButton, { backgroundColor: colors.backgroundMedium }]}
+            onPress={onCancel}
           >
-            <XCircle size={20} color={COLORS.textSecondary} />
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <XCircle size={20} color={colors.textSecondary} />
+            <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[
               styles.saveButton,
               (!name.trim() || !code.trim()) && styles.saveButtonDisabled,
+              { backgroundColor: colors.accent }
             ]}
             onPress={handleSubmit}
             disabled={!name.trim() || !code.trim() || loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={COLORS.textPrimary} />
+              <ActivityIndicator size="small" color={colors.textPrimary} />
             ) : (
               <>
-                <Save size={20} color={COLORS.textPrimary} />
-                <Text style={styles.saveButtonText}>
+                <Save size={20} color={colors.textPrimary} />
+                <Text style={[styles.saveButtonText, { color: colors.textPrimary }]}>
                   {existingCard ? 'Update Card' : 'Save Card'}
                 </Text>
               </>
@@ -169,7 +160,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundDark,
   },
   contentContainer: {
     padding: 16,
@@ -180,12 +170,9 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: COLORS.backgroundMedium,
-    color: COLORS.textPrimary,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -200,70 +187,9 @@ const styles = StyleSheet.create({
   },
   codeInput: {
     flex: 1,
-    backgroundColor: COLORS.backgroundMedium,
-    color: COLORS.textPrimary,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-  },
-  scanButton: {
-    backgroundColor: COLORS.backgroundLight,
-    padding: 12,
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  scanButtonDisabled: {
-    backgroundColor: COLORS.backgroundMedium,
-    opacity: 0.5,
-  },
-  webNotice: {
-    color: COLORS.textHint,
-    fontSize: 12,
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  codeTypeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  codeTypeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.backgroundMedium,
-    padding: 12,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  codeTypeButtonActive: {
-    backgroundColor: COLORS.backgroundLight,
-    borderColor: COLORS.accent,
-    borderWidth: 1,
-  },
-  codeTypeText: {
-    color: COLORS.textSecondary,
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  codeTypeTextActive: {
-    color: COLORS.textPrimary,
-  },
-  colorOptionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  colorOption: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-    marginBottom: 12,
-  },
-  colorOptionSelected: {
-    borderWidth: 3,
-    borderColor: COLORS.textPrimary,
   },
   actions: {
     flexDirection: 'row',
@@ -274,7 +200,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.backgroundMedium,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -282,7 +207,6 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   cancelButtonText: {
-    color: COLORS.textSecondary,
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 16,
@@ -291,18 +215,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.accent,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     flex: 2,
   },
   saveButtonDisabled: {
-    backgroundColor: COLORS.accentDark,
     opacity: 0.6,
   },
   saveButtonText: {
-    color: COLORS.textPrimary,
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 16,

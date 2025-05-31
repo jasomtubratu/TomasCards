@@ -1,16 +1,18 @@
 import { Tabs } from 'expo-router';
 import { Chrome as Home, HomeIcon, CirclePlus as PlusCircle, Settings } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
-import { COLORS } from '@/constants/Colors';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        headerShown: false, // Hide the default header
-        tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.accent,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+        headerShown: false,
+        tabBarStyle: [styles.tabBar, { backgroundColor: colors.backgroundDark }],
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: styles.tabBarLabel,
       }}>
       <Tabs.Screen
@@ -44,7 +46,6 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: COLORS.backgroundDark,
     borderTopWidth: 0,
     elevation: 0,
     height: 60,

@@ -13,9 +13,12 @@ export interface LoyaltyCard {
 
 export type SortOption = 'alphabetical' | 'recent' | 'lastUsed' | 'custom';
 
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 export interface AppSettings {
   sortOption: SortOption;
-  cardOrder?: string[]; // Array of card IDs in custom order
+  cardOrder?: string[];
   hapticFeedback: boolean;
   secureWithBiometrics: boolean;
+  themeMode: ThemeMode;
 }

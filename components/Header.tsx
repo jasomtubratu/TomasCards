@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
-import { COLORS } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/hooks/useTheme';
 
 interface HeaderProps {
   title: string;
@@ -13,18 +13,22 @@ interface HeaderProps {
 
 export default function Header({ title, showBack = true, rightElement }: HeaderProps) {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { 
+      backgroundColor: colors.backgroundDark,
+      borderBottomColor: colors.backgroundMedium 
+    }]}>
       <View style={styles.leftSection}>
         {showBack && (
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color={COLORS.textPrimary} />
+            <ArrowLeft size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
       
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       
       <View style={styles.rightSection}>
         {rightElement}
@@ -40,9 +44,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.backgroundDark,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.backgroundMedium,
   },
   leftSection: {
     width: 60,
@@ -57,7 +59,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
     textAlign: 'center',
     flex: 1,
   },

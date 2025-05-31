@@ -9,11 +9,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ArrowUpDown, Star, Plus } from 'lucide-react-native';
+import { ArrowUpDown, Plus } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { LoyaltyCard } from '@/utils/types';
 import { loadCards } from '@/utils/storage';
-import { COLORS } from '@/constants/Colors';
+import { useTheme } from '@/hooks/useTheme';
 import LoyaltyCardComponent from '@/components/LoyaltyCard';
 import Header from '@/components/Header';
 import EmptyState from '@/components/EmptyState';
@@ -22,6 +22,7 @@ type SortType = 'name' | 'date' | 'lastUsed';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [cards, setCards] = useState<LoyaltyCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -77,11 +78,15 @@ export default function HomeScreen() {
   const otherCards = sortedCards.filter(card => !card.isFavorite);
 
   const SortMenu = () => (
-    <View style={[styles.sortMenu, !showSortMenu && styles.hidden]}>
+    <View style={[
+      styles.sortMenu,
+      !showSortMenu && styles.hidden,
+      { backgroundColor: colors.backgroundMedium }
+    ]}>
       <TouchableOpacity 
         style={[
           styles.sortOption,
-          sortType === 'name' && styles.sortOptionSelected
+          sortType === 'name' && { backgroundColor: colors.backgroundLight }
         ]} 
         onPress={() => {
           setSortType('name');
@@ -89,13 +94,13 @@ export default function HomeScreen() {
         }}>
         <Text style={[
           styles.sortOptionText,
-          sortType === 'name' && styles.sortOptionTextSelected
+          { color: sortType === 'name' ? colors.accent : colors.textPrimary }
         ]}>Sort by Name</Text>
       </TouchableOpacity>
       <TouchableOpacity 
         style={[
           styles.sortOption,
-          sortType === 'date' && styles.sortOptionSelected
+          sortType === 'date' && { backgroundColor: colors.backgroundLight }
         ]}
         onPress={() => {
           setSortType('date');
@@ -103,13 +108,13 @@ export default function HomeScreen() {
         }}>
         <Text style={[
           styles.sortOptionText,
-          sortType === 'date' && styles.sortOptionTextSelected
+          { color: sortType === 'date' ? colors.accent : colors.textPrimary }
         ]}>Sort by Date Added</Text>
       </TouchableOpacity>
       <TouchableOpacity 
         style={[
           styles.sortOption,
-          sortType === 'lastUsed' && styles.sortOptionSelected
+          sortType === 'lastUsed' && { backgroundColor: colors.backgroundLight }
         ]}
         onPress={() => {
           setSortType('lastUsed');
@@ -117,7 +122,7 @@ export default function HomeScreen() {
         }}>
         <Text style={[
           styles.sortOptionText,
-          sortType === 'lastUsed' && styles.sortOptionTextSelected
+          { color: sortType === 'lastUsed' ? colors.accent : colors.textPrimary }
         ]}>Sort by Last Used</Text>
       </TouchableOpacity>
     </View>
@@ -128,7 +133,7 @@ export default function HomeScreen() {
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
         <FlatList
           data={data}
           keyExtractor={item => item.id}
@@ -147,30 +152,30 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
+      <View style={[styles.center, { backgroundColor: colors.backgroundDark }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
       <Header 
         title="Card Collection" 
         showBack={false}
         rightElement={
           <View style={styles.headerButtons}>
             <TouchableOpacity 
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.backgroundMedium }]}
               onPress={() => setShowSortMenu(!showSortMenu)}
             >
-              <ArrowUpDown size={24} color={COLORS.textPrimary} />
+              <ArrowUpDown size={24} color={colors.textPrimary} />
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.backgroundMedium }]}
               onPress={() => router.push('/add')}
             >
-              <Plus size={24} color={COLORS.textPrimary} />
+              <Plus size={24} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
         }
@@ -182,8 +187,8 @@ export default function HomeScreen() {
         <EmptyState />
       ) : (
         <FlatList
-          data={[]} // Empty data as we're using ListHeaderComponent
-          renderItem={() => null} // No-op renderItem to satisfy FlatList requirements
+          data={[]}
+          renderItem={() => null}
           ListHeaderComponent={
             <>
               {renderSection('Favorites', favoriteCards)}
@@ -195,8 +200,8 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={COLORS.accent}
-              colors={[COLORS.accent]}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
             />
           }
         />
@@ -208,13 +213,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundDark,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.backgroundDark,
   },
   list: {
     padding: 8,
@@ -225,7 +228,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginBottom: 12,
     marginLeft: 8,
   },
@@ -236,14 +238,12 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     padding: 8,
-    backgroundColor: COLORS.backgroundMedium,
     borderRadius: 8,
   },
   sortMenu: {
     position: 'absolute',
     top: 60,
     right: 16,
-    backgroundColor: COLORS.backgroundMedium,
     borderRadius: 12,
     padding: 4,
     zIndex: 1000,
@@ -262,15 +262,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 2,
   },
-  sortOptionSelected: {
-    backgroundColor: COLORS.backgroundLight,
-  },
   sortOptionText: {
-    color: COLORS.textPrimary,
     fontSize: 16,
-  },
-  sortOptionTextSelected: {
-    color: COLORS.accent,
-    fontWeight: '600',
   },
 });

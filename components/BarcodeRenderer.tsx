@@ -12,13 +12,13 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
-import { COLORS } from '@/constants/Colors';
+import { useTheme } from '@/hooks/useTheme';
 
 export type BarcodeRendererProps = {
   code: string;
   codeType: 'barcode' | 'qrcode';
-  width?: number;    // line thickness for barcode or size for QR
-  height?: number;   // height for barcode or size for QR
+  width?: number;
+  height?: number;
 };
 
 const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
@@ -27,30 +27,31 @@ const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
   width,
   height,
 }) => {
+  const { colors } = useTheme();
   const scale = useSharedValue(1);
   const windowWidth = Dimensions.get('window').width - 64;
 
-  // Defaults
   const defaultBarcodeWidth = 2;
   const defaultBarcodeHeight = 100;
   const defaultQrSize = 200;
 
-  // Derived dimensions
   const barcodeWidth = width ?? defaultBarcodeWidth;
   const barcodeHeight = height ?? defaultBarcodeHeight;
   const qrSize = height ?? width ?? defaultQrSize;
   const containerWidth = codeType === 'barcode' ? windowWidth : qrSize;
   const containerHeight = codeType === 'barcode' ? barcodeHeight : qrSize;
 
-  // HTML content for rendering
   const generateHtml = () => {
+    const backgroundColor = colors.backgroundMedium;
+    const foregroundColor = colors.textPrimary;
+
     if (codeType === 'barcode') {
       return `
         <!DOCTYPE html>
         <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-          <style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;background-color:#252640;}</style>
+          <style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;background-color:${backgroundColor};}</style>
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
         </head>
         <body>
@@ -58,8 +59,8 @@ const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
           <script>
             JsBarcode('#barcode', '${code}', {
               format: 'CODE128',
-              lineColor: '#FFFFFF',
-              background: '#252640',
+              lineColor: '${foregroundColor}',
+              background: '${backgroundColor}',
               width: ${barcodeWidth},
               height: ${barcodeHeight},
               displayValue: false
@@ -70,13 +71,12 @@ const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
       `;
     }
 
-    // QR Code
     return `
       <!DOCTYPE html>
       <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-        <style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;background-color:#252640;}#qrcode{padding:0;margin:0;}</style>
+        <style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;background-color:${backgroundColor};}#qrcode{padding:0;margin:0;}</style>
         <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
       </head>
       <body>
@@ -105,11 +105,11 @@ const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundMedium }]}>
       <PinchGestureHandler onGestureEvent={pinchGestureHandler}>
         <Animated.View style={[styles.webViewContainer, animatedStyle, { width: containerWidth, height: containerHeight }]}>            
           <WebView
-            style={[styles.webView, { backgroundColor: COLORS.backgroundMedium }]} 
+            style={[styles.webView, { backgroundColor: colors.backgroundMedium }]} 
             source={{ html: generateHtml() }}
             originWhitelist={['*']}
             scalesPageToFit={false}
@@ -121,7 +121,7 @@ const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
       </PinchGestureHandler>
       <View style={styles.instructions}>
         <Svg height={40} width={containerWidth}>
-          <Rect x={0} y={0} width={containerWidth} height={40} fill={COLORS.backgroundMedium} rx={8} ry={8} />
+          <Rect x={0} y={0} width={containerWidth} height={40} fill={colors.backgroundMedium} rx={8} ry={8} />
         </Svg>
       </View>
     </View>
@@ -132,7 +132,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.backgroundMedium,
     borderRadius: 16,
     padding: 16,
     overflow: 'hidden',
