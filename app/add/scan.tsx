@@ -26,6 +26,7 @@ export default function ScanScreen() {
       name: store || 'Unknown Store',
       code: data,
       codeType: type,
+      brand: store,
       color: COLORS.accent,
       dateAdded: Date.now(),
     };

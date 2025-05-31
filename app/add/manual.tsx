@@ -37,6 +37,7 @@ export default function ManualEntryScreen() {
     const newCard: LoyaltyCard = {
       id: Date.now().toString(),
       name,
+      brand: store,
       code,
       codeType: (meta?.type as 'barcode' | 'qrcode') ?? 'barcode',
       color,

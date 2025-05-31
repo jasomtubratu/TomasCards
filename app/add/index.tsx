@@ -53,7 +53,6 @@ export default function AddCardScreen() {
             onPress={() => handleSelect(item.id)}
             activeOpacity={0.7}
           >
-            {/* item.logo is already require(...)’d in assets/cards.ts */}
             <Image source={item.logo} style={styles.logo} />
             <Text style={styles.itemText}>{item.name}</Text>
           </TouchableOpacity>

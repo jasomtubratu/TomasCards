@@ -1,14 +1,13 @@
 export interface LoyaltyCard {
   id: string;
   name: string;
+  brand?: string;
   code: string;
   codeType: 'barcode' | 'qrcode';
   color: string;
   dateAdded: number;
   lastUsed?: number;
   notes?: string;
-  // For custom logo/icon (URL string or base64)
-  logoUrl?: string;
   isFavorite?: boolean;
 }
 
