@@ -185,7 +185,6 @@ export default function CardDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* --- EDIT FORM AS A CENTERED MODAL --- */}
       <Modal
         visible={isEditing}
         animationType="slide"
@@ -345,9 +344,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  /* ==========================
-     Modal styles 
-     ========================== */
+
   modalBackground: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

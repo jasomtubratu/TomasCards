@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Dimensions, Platform } from 'react-native';
-import { Camera } from 'expo-camera';
+import { Camera, CameraView } from 'expo-camera';
 
 type CodeScannerProps = {
   onCodeScanned: (data: string, type: 'barcode' | 'qrcode') => void;
@@ -53,11 +53,11 @@ const CodeScanner: React.FC<CodeScannerProps> = ({ onCodeScanned }) => {
 
   return (
     <View style={[styles.cameraContainer, { width: frameWidth, height: frameHeight }]}>
-      <Camera
+      <CameraView
         style={StyleSheet.absoluteFill}
-        onBarCodeScanned={handleCodeScanned}
-        barCodeScannerSettings={{
-          barCodeTypes: ["qr", "ean13", "ean8", "code128", "code39"],
+        onBarcodeScanned={handleCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: ["qr", "ean13", "ean8", "code128", "code39"],
         }}
       />
       <View style={[styles.overlay, { width: frameWidth, height: frameHeight }]} />

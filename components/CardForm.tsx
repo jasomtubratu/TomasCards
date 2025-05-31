@@ -120,13 +120,6 @@ const CardForm: React.FC<CardFormProps> = ({
         </View>
         
         <View style={styles.actions}>
-          <TouchableOpacity 
-            style={[styles.cancelButton, { backgroundColor: colors.backgroundMedium }]}
-            onPress={onCancel}
-          >
-            <XCircle size={20} color={colors.textSecondary} />
-            <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
-          </TouchableOpacity>
           
           <TouchableOpacity 
             style={[
