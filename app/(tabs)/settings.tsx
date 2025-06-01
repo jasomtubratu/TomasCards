@@ -164,6 +164,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/*
         <TouchableOpacity style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
           <View style={styles.settingLeft}>
             <Coffee size={24} color={colors.textSecondary} />
@@ -177,6 +178,7 @@ export default function SettingsScreen() {
             </View>
           </View>
         </TouchableOpacity>
+        */}
       </View>
     </ScrollView>
   );
