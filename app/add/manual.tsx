@@ -7,147 +7,209 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Platform,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, X } from 'lucide-react-native';
-import { COLORS } from '@/constants/Colors';
+import { Save } from 'lucide-react-native';
 import { addCard } from '@/utils/storage';
 import type { LoyaltyCard } from '@/utils/types';
 import { POPULAR_CARDS } from '@/assets/cards';
+import Header from '@/components/Header';
+import { useTheme } from '@/hooks/useTheme';
+import { lightHaptic } from '@/utils/feedback';
 
 export default function ManualEntryScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { store } = useLocalSearchParams<{ store?: string }>();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // find store metadata
   const meta = POPULAR_CARDS.find((c) => c.id === store);
   const name = meta?.name ?? '';
   // fallback color for manual entries
-  const color = COLORS.accent;
+  const color = meta?.color ?? colors.accent;
 
-  const handleBack = () => router.back();
-  const handleClose = () => router.replace('/');
   const handleSave = async () => {
     if (!code.trim()) {
-      setError('Musíte zadať kód');
+      setError('Please enter a valid code');
       return;
     }
-    const newCard: LoyaltyCard = {
-      id: Date.now().toString(),
-      name,
-      brand: store,
-      code,
-      codeType: (meta?.type as 'barcode' | 'qrcode') ?? 'barcode',
-      color,
-      dateAdded: Date.now(),
-    };
-    await addCard(newCard);
-    router.replace(`/card/${newCard.id}`);
+
+    setLoading(true);
+    await lightHaptic();
+
+    try {
+      const newCard: LoyaltyCard = {
+        id: Date.now().toString(),
+        name,
+        brand: store,
+        code,
+        codeType: (meta?.type as 'barcode' | 'qrcode') ?? 'barcode',
+        color,
+        dateAdded: Date.now(),
+      };
+      await addCard(newCard);
+      router.replace(`/card/${newCard.id}`);
+    } catch (err) {
+      setError('Failed to save card. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
+      <Header
+        title={store ? `Add ${name} Card` : 'Add Card'}
+        showBack={true}
+      />
 
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
-            <ArrowLeft size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-
-          <Text style={styles.title}>
-            {store?.toUpperCase() || 'Scan'}
-          </Text>
-
-          <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
-            <X size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.title}>
-          Manuálne pridanie karty
-        </Text>
-        <Text style={styles.instruction}>
-          Zadaj čiarový kód svojej karty ručne
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Čiarový kód"
-          placeholderTextColor={COLORS.textSecondary}
-          value={code}
-          onChangeText={(t) => {
-            setCode(t);
-            setError('');
-          }}
-          autoCapitalize="none"
-          keyboardType="number-pad"
-          autoFocus
-        />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        <TouchableOpacity
-          style={styles.saveBtn}
-          onPress={handleSave}
-          activeOpacity={0.8}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.saveBtnText}>Uložiť</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    </>
+          <View style={styles.content}>
+            <View style={[styles.card, { backgroundColor: colors.backgroundMedium }]}>
+              <View style={styles.logoContainer}>
+                <View style={[styles.logoPlaceholder, { backgroundColor: color }]}>
+                  <Text style={[styles.logoText, { color: colors.textPrimary }]}>
+                    {name.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={[styles.storeName, { color: colors.textPrimary }]}>
+                  {name}
+                </Text>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Card Number
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    { 
+                      backgroundColor: colors.backgroundLight,
+                      color: colors.textPrimary,
+                      borderColor: error ? colors.error : colors.backgroundLight 
+                    }
+                  ]}
+                  value={code}
+                  onChangeText={(text) => {
+                    setCode(text);
+                    setError('');
+                  }}
+                  placeholder="Enter card number"
+                  placeholderTextColor={colors.textHint}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="default"
+                />
+                {error ? (
+                  <Text style={[styles.errorText, { color: colors.error }]}>
+                    {error}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                { backgroundColor: colors.accent },
+                (!code.trim() || loading) && styles.saveButtonDisabled
+              ]}
+              onPress={handleSave}
+              disabled={!code.trim() || loading}
+            >
+              <Save size={20} color={colors.textPrimary} />
+              <Text style={[styles.saveButtonText, { color: colors.textPrimary }]}>
+                {loading ? 'Saving...' : 'Save Card'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundDark,
-    paddingTop: Platform.OS === 'android' ? 48 : 0,
-    paddingHorizontal: 16,
   },
-  header: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  keyboardAvoid: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  card: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+  },
+  logoContainer: {
     alignItems: 'center',
-    paddingVertical: 16,
+    marginBottom: 24,
   },
-  iconBtn: {
-    padding: 8,
+  logoPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  title: {
-    color: COLORS.textPrimary,
-    fontSize: 20,
-    fontWeight: '600',
-    paddingBottom: 8,
+  logoText: {
+    fontSize: 32,
+    fontWeight: '700',
   },
-  instruction: {
-    color: COLORS.textSecondary,
+  storeName: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  inputContainer: {
+    marginBottom: 8,
+  },
+  label: {
     fontSize: 14,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   input: {
     height: 48,
-    backgroundColor: COLORS.backgroundMedium,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    color: COLORS.textPrimary,
+    fontSize: 16,
+    borderWidth: 2,
   },
-  error: {
-    color: COLORS.error,
+  errorText: {
+    fontSize: 14,
     marginTop: 8,
   },
-  saveBtn: {
-    marginTop: 24,
-    backgroundColor: COLORS.accent,
-    borderRadius: 24,
-    paddingVertical: 12,
+  saveButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
   },
-  saveBtnText: {
-    color: COLORS.textPrimary,
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
+  saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },
