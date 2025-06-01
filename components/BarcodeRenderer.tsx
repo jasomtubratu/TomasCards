@@ -119,11 +119,6 @@ const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
           />
         </Animated.View>
       </PinchGestureHandler>
-      <View style={styles.instructions}>
-        <Svg height={40} width={containerWidth}>
-          <Rect x={0} y={0} width={containerWidth} height={40} fill={colors.backgroundMedium} rx={8} ry={8} />
-        </Svg>
-      </View>
     </View>
   );
 };
@@ -144,7 +139,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   instructions: {
-    marginTop: 16,
     alignItems: 'center',
   },
 });

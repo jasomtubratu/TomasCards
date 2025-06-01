@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Switch,
   TouchableOpacity,
   ScrollView,
   Alert,
   Platform
 } from 'react-native';
-import { Import as SortAsc, Vibrate, Fingerprint, Trash2, Coffee, Info, User, Moon, Sun, Monitor } from 'lucide-react-native';
+import { Trash2, Coffee, Info, User, Moon, Sun, Monitor } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { AppSettings, SortOption, ThemeMode } from '@/utils/types';
-import { loadSettings, saveSettings, loadCards, saveCards } from '@/utils/storage';
+import { AppSettings, ThemeMode } from '@/utils/types';
+import { loadSettings, saveSettings, saveCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
 import LanguageSelector from '@/components/LanguageSelector';
 import { lightHaptic } from '@/utils/feedback';
@@ -94,9 +93,6 @@ export default function SettingsScreen() {
         themeMode: pendingTheme,
       });
       setThemeMode(pendingTheme);
-      if (Platform.OS === 'web') {
-        window.location.reload();
-      }
     }
     setShowThemeDialog(false);
     setPendingTheme(null);
