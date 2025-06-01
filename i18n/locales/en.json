@@ -6,7 +6,8 @@
       "delete": "Delete",
       "edit": "Edit",
       "close": "Close",
-      "back": "Back"
+      "back": "Back",
+      "confirm": "Confirm"
     },
     "labels": {
       "name": "Name",
@@ -77,10 +78,12 @@
       "available": "Available Languages"
     },
     "theme": {
-      "title": "Theme",
+      "title": "Change Theme",
       "light": "Light Mode",
       "dark": "Dark Mode",
-      "system": "System"
+      "system": "System",
+      "systemDescription": "Follow system appearance",
+      "confirmChange": "Changing the theme requires a restart to apply properly. Do you want to continue?"
     },
     "deleteAll": {
       "title": "Delete All Cards",

@@ -16,6 +16,7 @@ import { loadSettings, saveSettings, loadCards, saveCards } from '@/utils/storag
 import { useTheme } from '@/hooks/useTheme';
 import LanguageSelector from '@/components/LanguageSelector';
 import { lightHaptic } from '@/utils/feedback';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -26,6 +27,8 @@ export default function SettingsScreen() {
     secureWithBiometrics: false,
     themeMode: 'system',
   });
+  const [showThemeDialog, setShowThemeDialog] = useState(false);
+  const [pendingTheme, setPendingTheme] = useState<ThemeMode | null>(null);
 
   // Load settings
   useEffect(() => {
@@ -80,11 +83,28 @@ export default function SettingsScreen() {
     if (Platform.OS !== 'web') {
       await lightHaptic();
     }
-    await updateSettings({
-      ...settings,
-      themeMode: newTheme,
-    });
-    setThemeMode(newTheme);
+    setPendingTheme(newTheme);
+    setShowThemeDialog(true);
+  };
+
+  const handleThemeConfirm = async () => {
+    if (pendingTheme) {
+      await updateSettings({
+        ...settings,
+        themeMode: pendingTheme,
+      });
+      setThemeMode(pendingTheme);
+      if (Platform.OS === 'web') {
+        window.location.reload();
+      }
+    }
+    setShowThemeDialog(false);
+    setPendingTheme(null);
+  };
+
+  const handleThemeCancel = () => {
+    setShowThemeDialog(false);
+    setPendingTheme(null);
   };
 
   return (
@@ -228,6 +248,16 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
       </View>
+
+      <ConfirmDialog
+        visible={showThemeDialog}
+        title={t('settings.theme.title')}
+        message={t('settings.theme.confirmChange')}
+        confirmText={t('common.buttons.confirm')}
+        cancelText={t('common.buttons.cancel')}
+        onConfirm={handleThemeConfirm}
+        onCancel={handleThemeCancel}
+      />
     </ScrollView>
   );
 }

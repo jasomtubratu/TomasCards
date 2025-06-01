@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { XCircle, Save } from 'lucide-react-native';
+import { Circle as XCircle, Save } from 'lucide-react-native';
 import { LoyaltyCard } from '@/utils/types';
 import { successHaptic, lightHaptic } from '@/utils/feedback';
 import { useTheme } from '@/hooks/useTheme';
@@ -102,7 +102,6 @@ const CardForm: React.FC<CardFormProps> = ({
             />
           </View>
         </View>
-        
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: colors.textPrimary }]}>Notes (Optional)</Text>
           <TextInput
@@ -118,9 +117,7 @@ const CardForm: React.FC<CardFormProps> = ({
             numberOfLines={3}
           />
         </View>
-        
         <View style={styles.actions}>
-          
           <TouchableOpacity 
             style={[
               styles.saveButton,
@@ -131,7 +128,7 @@ const CardForm: React.FC<CardFormProps> = ({
             disabled={!name.trim() || !code.trim() || loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={colors.textPrimary} />
+              <ActivityIndicator size="small\" color={colors.textPrimary} />
             ) : (
               <>
                 <Save size={20} color={colors.textPrimary} />

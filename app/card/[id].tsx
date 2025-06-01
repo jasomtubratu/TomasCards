@@ -180,9 +180,6 @@ export default function CardDetailScreen() {
               {t('common.buttons.edit')}
             </Text>
           </TouchableOpacity>
-
-          
-
           <TouchableOpacity 
             style={[styles.deleteButton, { backgroundColor: colors.backgroundMedium }]}
             onPress={handleDeleteCard}
