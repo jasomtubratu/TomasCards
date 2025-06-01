@@ -3,10 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Switch,
   ScrollView,
+  TouchableOpacity,
+  Platform,
   Alert,
-  Platform
 } from 'react-native';
 import { Trash2, Coffee, Info, User, Moon, Sun, Monitor } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +16,7 @@ import { loadSettings, saveSettings, saveCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
 import LanguageSelector from '@/components/LanguageSelector';
 import { lightHaptic } from '@/utils/feedback';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import ThemeSelector from '@/components/ThemeSelector';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -26,35 +27,40 @@ export default function SettingsScreen() {
     secureWithBiometrics: false,
     themeMode: 'system',
   });
-  const [showThemeDialog, setShowThemeDialog] = useState(false);
-  const [pendingTheme, setPendingTheme] = useState<ThemeMode | null>(null);
 
-  // Load settings
+  // Load settings once
   useEffect(() => {
-    const fetchSettings = async () => {
+    (async () => {
       const userSettings = await loadSettings();
       setSettings(userSettings);
-    };
-    fetchSettings();
+    })();
   }, []);
 
-  // Update settings when changes are made
+  // Helper to update both local state and persistent storage
   const updateSettings = async (newSettings: AppSettings) => {
     setSettings(newSettings);
     await saveSettings(newSettings);
   };
 
-  // Delete all cards
+  // Toggle between 'light' and 'dark' immediately (no confirmation)
+  const handleThemeToggle = async (value: boolean) => {
+    if (Platform.OS !== 'web') {
+      await lightHaptic();
+    }
+    const newMode: ThemeMode = value ? 'dark' : 'light';
+    setThemeMode(newMode);
+    await updateSettings({ ...settings, themeMode: newMode });
+  };
+
+  // Confirm deletion of all cards
   const confirmDeleteAllCards = async () => {
     await lightHaptic();
-
     if (Platform.OS === 'web') {
       if (confirm(t('settings.deleteAll.confirm'))) {
         await deleteAllCards();
       }
       return;
     }
-
     Alert.alert(
       t('settings.deleteAll.title'),
       t('settings.deleteAll.confirm'),
@@ -72,45 +78,24 @@ export default function SettingsScreen() {
     );
   };
 
-  // Delete all cards
+  // Actually delete every card
   const deleteAllCards = async () => {
     await saveCards([]);
     await lightHaptic();
   };
 
-  const handleThemeChange = async (newTheme: ThemeMode) => {
-    if (Platform.OS !== 'web') {
-      await lightHaptic();
-    }
-    setPendingTheme(newTheme);
-    setShowThemeDialog(true);
-  };
-
-  const handleThemeConfirm = async () => {
-    if (pendingTheme) {
-      await updateSettings({
-        ...settings,
-        themeMode: pendingTheme,
-      });
-      setThemeMode(pendingTheme);
-    }
-    setShowThemeDialog(false);
-    setPendingTheme(null);
-  };
-
-  const handleThemeCancel = () => {
-    setShowThemeDialog(false);
-    setPendingTheme(null);
-  };
+  const isDarkMode = settings.themeMode === 'dark';
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.backgroundDark }]} contentContainerStyle={styles.content}>
-      {/* Preferences Section */}
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.backgroundDark }]}
+      contentContainerStyle={styles.content}
+    >
+      {/* Account Section */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
           {t('settings.sections.account')}
         </Text>
-
         <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
           <View style={styles.settingLeft}>
             <User size={24} color={colors.textSecondary} />
@@ -126,67 +111,17 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* Language Section */}
+      {/* Appearance Section */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
           {t('settings.sections.appearance')}
         </Text>
-        
+
+        {/* Language Selector */}
         <LanguageSelector />
 
-        <TouchableOpacity
-          style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
-          onPress={() => handleThemeChange('light')}
-        >
-          <View style={styles.settingLeft}>
-            <Sun size={24} color={colors.textSecondary} />
-            <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                {t('settings.theme.light')}
-              </Text>
-            </View>
-          </View>
-          {settings.themeMode === 'light' && (
-            <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]} />
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
-          onPress={() => handleThemeChange('dark')}
-        >
-          <View style={styles.settingLeft}>
-            <Moon size={24} color={colors.textSecondary} />
-            <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                {t('settings.theme.dark')}
-              </Text>
-            </View>
-          </View>
-          {settings.themeMode === 'dark' && (
-            <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]} />
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
-          onPress={() => handleThemeChange('system')}
-        >
-          <View style={styles.settingLeft}>
-            <Monitor size={24} color={colors.textSecondary} />
-            <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                {t('settings.theme.system')}
-              </Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {t('settings.theme.systemDescription')}
-              </Text>
-            </View>
-          </View>
-          {settings.themeMode === 'system' && (
-            <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]} />
-          )}
-        </TouchableOpacity>
+        {/* Theme Selector */}
+        <ThemeSelector />
       </View>
 
       {/* Data Management Section */}
@@ -194,7 +129,6 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
           {t('settings.sections.data')}
         </Text>
-
         <TouchableOpacity
           style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
           onPress={confirmDeleteAllCards}
@@ -244,16 +178,6 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
       </View>
-
-      <ConfirmDialog
-        visible={showThemeDialog}
-        title={t('settings.theme.title')}
-        message={t('settings.theme.confirmChange')}
-        confirmText={t('common.buttons.confirm')}
-        cancelText={t('common.buttons.cancel')}
-        onConfirm={handleThemeConfirm}
-        onCancel={handleThemeCancel}
-      />
     </ScrollView>
   );
 }
@@ -299,11 +223,5 @@ const styles = StyleSheet.create({
   settingDescription: {
     fontSize: 14,
     marginTop: 2,
-  },
-  activeIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginLeft: 8,
   },
 });
