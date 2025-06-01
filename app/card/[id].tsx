@@ -12,18 +12,21 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { Pencil, Star, Trash2, X } from 'lucide-react-native'; // Added X for close icon
+import { Pencil, Star, Trash2, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import QRCode from 'react-native-qrcode-svg';
 
 import { LoyaltyCard } from '@/utils/types';
 import { getCard, updateCard, deleteCard } from '@/utils/storage';
-import { COLORS } from '@/constants/Colors';
+import { useTheme } from '@/hooks/useTheme';
 import BarcodeRenderer from '@/components/BarcodeRenderer';
 import CardForm from '@/components/CardForm';
 import Header from '@/components/Header';
 
 export default function CardDetailScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
+  const { colors } = useTheme();
   const { id, edit } = useLocalSearchParams<{ id: string; edit?: string }>();
   const [card, setCard] = useState<LoyaltyCard | null>(null);
   const [isEditing, setIsEditing] = useState(edit === 'true');
@@ -66,16 +69,16 @@ export default function CardDetailScreen() {
     };
 
     if (Platform.OS === 'web') {
-      if (confirm('Are you sure you want to delete this card?')) {
+      if (confirm(t('cardDetail.deleteConfirm'))) {
         confirmDelete();
       }
     } else {
       Alert.alert(
-        'Delete Card',
-        'Are you sure you want to delete this card? This action cannot be undone.',
+        t('common.buttons.delete'),
+        t('cardDetail.deleteConfirm'),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', onPress: confirmDelete, style: 'destructive' },
+          { text: t('common.buttons.cancel'), style: 'cancel' },
+          { text: t('common.buttons.delete'), onPress: confirmDelete, style: 'destructive' },
         ]
       );
     }
@@ -91,26 +94,32 @@ export default function CardDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
+      <View style={[styles.centerContainer, { backgroundColor: colors.backgroundDark }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   if (!card) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Card not found</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.backgroundDark }]}>
+        <Text style={[styles.errorText, { color: colors.error }]}>
+          {t('common.labels.error')}
+        </Text>
+        <TouchableOpacity 
+          style={[styles.backButton, { backgroundColor: colors.backgroundMedium }]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.backButtonText, { color: colors.textPrimary }]}>
+            {t('common.buttons.back')}
+          </Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={styles.mainContainer}>
-      {/* --- Header bar for the detail screen --- */}
+    <View style={[styles.mainContainer, { backgroundColor: colors.backgroundDark }]}>
       <Header
         title={card.name}
         showBack={true}
@@ -119,22 +128,21 @@ export default function CardDetailScreen() {
           <TouchableOpacity onPress={toggleFavorite} style={styles.favoriteButton}>
             <Star
               size={24}
-              color={COLORS.textPrimary}
-              fill={card.isFavorite ? COLORS.textPrimary : 'none'}
+              color={colors.textPrimary}
+              fill={card.isFavorite ? colors.textPrimary : 'none'}
             />
           </TouchableOpacity>
         }
       />
 
-      {/* --- Main Card Detail Content --- */}
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.cardHeader}>
           <View style={[styles.logoPlaceholder, { backgroundColor: card.color }]}>
-            <Text style={styles.logoPlaceholderText}>
+            <Text style={[styles.logoPlaceholderText, { color: colors.textPrimary }]}>
               {card.name.charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text style={styles.cardName}>{card.name}</Text>
+          <Text style={[styles.cardName, { color: colors.textPrimary }]}>{card.name}</Text>
         </View>
 
         <View style={styles.codeContainer}>
@@ -142,44 +150,61 @@ export default function CardDetailScreen() {
             <QRCode
               value={card.code}
               size={200}
-              color={COLORS.textPrimary}
+              color={colors.textPrimary}
               backgroundColor="transparent"
             />
           ) : (
             <BarcodeRenderer code={card.code} codeType={card.codeType} />
           )}
-          <Text style={styles.codeText}>{card.code}</Text>
+          <Text style={[styles.codeText, { color: colors.textSecondary }]}>{card.code}</Text>
         </View>
 
         {card.notes ? (
-          <View style={styles.notesContainer}>
-            <Text style={styles.notesTitle}>Notes</Text>
-            <Text style={styles.notesText}>{card.notes}</Text>
+          <View style={[styles.notesContainer, { backgroundColor: colors.backgroundMedium }]}>
+            <Text style={[styles.notesTitle, { color: colors.textPrimary }]}>
+              {t('common.labels.notes')}
+            </Text>
+            <Text style={[styles.notesText, { color: colors.textSecondary }]}>
+              {card.notes}
+            </Text>
           </View>
         ) : null}
 
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={styles.editButton}
+            style={[styles.editButton, { backgroundColor: colors.backgroundMedium }]}
             onPress={() => setIsEditing(true)}
           >
-            <Pencil size={20} color={COLORS.textPrimary} />
-            <Text style={styles.buttonText}>Edit Card</Text>
+            <Pencil size={20} color={colors.textPrimary} />
+            <Text style={[styles.buttonText, { color: colors.textPrimary }]}>
+              {t('common.buttons.edit')}
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteCard}>
-            <Trash2 size={20} color={COLORS.error} />
-            <Text style={styles.deleteButtonText}>Delete Card</Text>
+          
+
+          <TouchableOpacity 
+            style={[styles.deleteButton, { backgroundColor: colors.backgroundMedium }]}
+            onPress={handleDeleteCard}
+          >
+            <Trash2 size={20} color={colors.error} />
+            <Text style={[styles.deleteButtonText, { color: colors.error }]}>
+              {t('common.buttons.delete')}
+            </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            Added: {new Date(card.dateAdded).toLocaleDateString()}
+          <Text style={[styles.infoText, { color: colors.textHint }]}>
+            {t('cardDetail.added', { 
+              date: new Date(card.dateAdded).toLocaleDateString() 
+            })}
           </Text>
           {card.lastUsed && (
-            <Text style={styles.infoText}>
-              Last used: {new Date(card.lastUsed).toLocaleDateString()}
+            <Text style={[styles.infoText, { color: colors.textHint }]}>
+              {t('cardDetail.lastUsed', { 
+                date: new Date(card.lastUsed).toLocaleDateString() 
+              })}
             </Text>
           )}
         </View>
@@ -191,21 +216,20 @@ export default function CardDetailScreen() {
         transparent={true}
         onRequestClose={() => setIsEditing(false)}
       >
-        {/* TouchableWithoutFeedback allows tapping outside to close */}
         <TouchableWithoutFeedback onPress={() => setIsEditing(false)}>
-          <View style={styles.modalBackground} />
+          <View style={[styles.modalBackground, { backgroundColor: colors.overlay }]} />
         </TouchableWithoutFeedback>
 
-        <View style={styles.modalContainer}>
-          {/* Header inside modal with a 'Close' (X) button */}
+        <View style={[styles.modalContainer, { backgroundColor: colors.backgroundDark }]}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Edit Card</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+              {t('common.buttons.edit')}
+            </Text>
             <TouchableOpacity onPress={() => setIsEditing(false)} style={styles.closeButton}>
-              <X size={24} color={COLORS.textPrimary} />
+              <X size={24} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
 
-          {/* CardForm will call handleUpdateCard when saved */}
           <CardForm existingCard={card} onSave={handleUpdateCard} />
         </View>
       </Modal>
@@ -216,12 +240,10 @@ export default function CardDetailScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: COLORS.backgroundDark,
     paddingTop: Platform.OS === 'ios' ? 48 : 24,
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundDark,
   },
   contentContainer: {
     padding: 16,
@@ -230,7 +252,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.backgroundDark,
     padding: 16,
   },
   favoriteButton: {
@@ -238,17 +259,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: COLORS.error,
     marginBottom: 24,
   },
   backButton: {
-    backgroundColor: COLORS.backgroundMedium,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
   backButtonText: {
-    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -266,14 +284,12 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   logoPlaceholderText: {
-    color: COLORS.textPrimary,
     fontSize: 28,
     fontWeight: '700',
   },
   cardName: {
     fontSize: 24,
     fontWeight: '700',
-    color: COLORS.textPrimary,
   },
   codeContainer: {
     alignItems: 'center',
@@ -281,13 +297,11 @@ const styles = StyleSheet.create({
   },
   codeText: {
     fontSize: 16,
-    color: COLORS.textSecondary,
     marginTop: 16,
     letterSpacing: 1,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   notesContainer: {
-    backgroundColor: COLORS.backgroundMedium,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -295,12 +309,10 @@ const styles = StyleSheet.create({
   notesTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   notesText: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     lineHeight: 20,
   },
   infoContainer: {
@@ -308,7 +320,6 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: COLORS.textHint,
     marginBottom: 4,
   },
   actionButtons: {
@@ -319,7 +330,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.backgroundMedium,
     padding: 16,
     borderRadius: 12,
     gap: 8,
@@ -328,37 +338,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.backgroundMedium,
     padding: 16,
     borderRadius: 12,
     gap: 8,
   },
   buttonText: {
-    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
   deleteButtonText: {
-    color: COLORS.error,
     fontSize: 16,
     fontWeight: '600',
   },
-
-
   modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContainer: {
     position: 'absolute',
     top: '20%',
     left: '5%',
     right: '5%',
-    backgroundColor: COLORS.backgroundDark,
     borderRadius: 16,
     padding: 16,
     maxHeight: '60%',
-    // Add a drop shadow on iOS/Android
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -374,7 +376,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
   },
   closeButton: {
     padding: 8,

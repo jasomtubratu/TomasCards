@@ -11,6 +11,7 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { ArrowUpDown, Plus } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import type { LoyaltyCard } from '@/utils/types';
 import { loadCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
@@ -21,6 +22,7 @@ import EmptyState from '@/components/EmptyState';
 type SortType = 'name' | 'date' | 'lastUsed';
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
   const [cards, setCards] = useState<LoyaltyCard[]>([]);
@@ -95,7 +97,7 @@ export default function HomeScreen() {
         <Text style={[
           styles.sortOptionText,
           { color: sortType === 'name' ? colors.accent : colors.textPrimary }
-        ]}>Sort by Name</Text>
+        ]}>{t('cards.sort.name')}</Text>
       </TouchableOpacity>
       <TouchableOpacity 
         style={[
@@ -109,7 +111,7 @@ export default function HomeScreen() {
         <Text style={[
           styles.sortOptionText,
           { color: sortType === 'date' ? colors.accent : colors.textPrimary }
-        ]}>Sort by Date Added</Text>
+        ]}>{t('cards.sort.date')}</Text>
       </TouchableOpacity>
       <TouchableOpacity 
         style={[
@@ -123,7 +125,7 @@ export default function HomeScreen() {
         <Text style={[
           styles.sortOptionText,
           { color: sortType === 'lastUsed' ? colors.accent : colors.textPrimary }
-        ]}>Sort by Last Used</Text>
+        ]}>{t('cards.sort.lastUsed')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -161,7 +163,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
       <Header 
-        title="Card Collection" 
+        title={t('cards.title')}
         showBack={false}
         rightElement={
           <View style={styles.headerButtons}>
@@ -184,15 +186,20 @@ export default function HomeScreen() {
       <SortMenu />
       
       {cards.length === 0 ? (
-        <EmptyState />
+        <EmptyState message={t('cards.empty')} />
       ) : (
         <FlatList
           data={[]}
           renderItem={() => null}
           ListHeaderComponent={
             <>
-              {renderSection('Favorites', favoriteCards)}
-              {renderSection(favoriteCards.length > 0 ? 'Other Cards' : 'All Cards', otherCards)}
+              {renderSection(t('cards.sections.favorites'), favoriteCards)}
+              {renderSection(
+                favoriteCards.length > 0 
+                  ? t('cards.sections.other')
+                  : t('cards.sections.all'),
+                otherCards
+              )}
             </>
           }
           contentContainerStyle={styles.list}

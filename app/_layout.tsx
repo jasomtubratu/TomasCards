@@ -5,10 +5,15 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useTheme } from '@/hooks/useTheme';
+import { initializeLanguage } from '@/utils/i18n';
 
 export default function RootLayout() {
   useFrameworkReady();
   const { isDark } = useTheme();
+
+  useEffect(() => {
+    initializeLanguage();
+  }, []);
 
   return (
     <GestureHandlerRootView style={styles.container}>

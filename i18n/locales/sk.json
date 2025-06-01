@@ -1,0 +1,93 @@
+{
+    "common": {
+      "buttons": {
+        "save": "Uložiť",
+        "cancel": "Zrušiť",
+        "delete": "Vymazať",
+        "edit": "Upraviť",
+        "close": "Zavrieť",
+        "back": "Späť"
+      },
+      "labels": {
+        "name": "Názov",
+        "code": "Kód",
+        "notes": "Poznámky",
+        "optional": "Voliteľné",
+        "loading": "Načítava sa...",
+        "error": "Chyba",
+        "success": "Úspech"
+      },
+      "validation": {
+        "required": "Toto pole je povinné",
+        "invalid": "Neplatná hodnota"
+      }
+    },
+    "tabs": {
+      "cards": "Karty",
+      "add": "Pridať",
+      "settings": "Nastavenia"
+    },
+    "cards": {
+      "title": "Zbierka kariet",
+      "empty": "Zatiaľ nemáte žiadne vernostné karty. Klepnite na kartu „Pridať“ a pridajte svoju prvú kartu.",
+      "sections": {
+        "favorites": "Obľúbené",
+        "other": "Ostatné karty",
+        "all": "Všetky karty"
+      },
+      "sort": {
+        "title": "Zoradiť podľa",
+        "name": "Názvu",
+        "date": "Dátumu pridania",
+        "lastUsed": "Naposledy použité"
+      }
+    },
+    "addCard": {
+      "title": "Pridať kartu",
+      "scan": {
+        "title": "Skenovať kartu",
+        "instruction": "Naskenujte čiarový kód alebo QR kód karty",
+        "manual": "Nedarí sa naskenovať kartu?",
+        "enterManually": "Zadať ručne"
+      },
+      "manual": {
+        "title": "Zadajte údaje o karte",
+        "cardNumber": "Číslo karty",
+        "cardNumberPlaceholder": "Zadajte číslo karty",
+        "notesPlaceholder": "Pridajte doplňujúce informácie"
+      }
+    },
+    "cardDetail": {
+      "added": "Pridané: {{date}}",
+      "lastUsed": "Naposledy použité: {{date}}",
+      "deleteConfirm": "Naozaj chcete túto kartu vymazať? Táto akcia je nevratná.",
+      "deleteSuccess": "Karta bola úspešne vymazaná"
+    },
+    "settings": {
+      "title": "Nastavenia",
+      "sections": {
+        "account": "Môj účet",
+        "appearance": "Vzhľad",
+        "data": "Správa údajov",
+        "about": "O aplikácii"
+      },
+      "language": {
+        "title": "Jazyk",
+        "system": "Systémový jazyk",
+        "available": "Dostupné jazyky"
+      },
+      "theme": {
+        "title": "Téma",
+        "light": "Svetlý režim",
+        "dark": "Tmavý režim",
+        "system": "Systémová"
+      },
+      "deleteAll": {
+        "title": "Vymazať všetky karty",
+        "description": "Natrvalo odstrániť všetky vernostné karty",
+        "confirm": "Naozaj chcete vymazať všetky karty?"
+      },
+      "version": "Verzia {{version}}"
+    }
+  }
+  

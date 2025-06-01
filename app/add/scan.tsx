@@ -8,13 +8,16 @@ import {
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, X } from 'lucide-react-native';
-import { COLORS } from '@/constants/Colors';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/hooks/useTheme';
 import CodeScanner from '@/components/CodeScanner';
 import { addCard } from '@/utils/storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ScanScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
+  const { colors } = useTheme();
   const { store } = useLocalSearchParams<{ store?: string }>();
   const [scanned, setScanned] = useState(false);
 
@@ -27,11 +30,10 @@ export default function ScanScreen() {
       code: data,
       codeType: type,
       brand: store,
-      color: COLORS.accent,
+      color: colors.accent,
       dateAdded: Date.now(),
     };
     await addCard(newCard);
-    // Navigate to the card detail screen with the new card data
     router.replace(`/card/${newCard.id}`);
   };
 
@@ -46,33 +48,38 @@ export default function ScanScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
-            <ArrowLeft size={24} color={COLORS.textPrimary} />
+            <ArrowLeft size={24} color={colors.textPrimary} />
           </TouchableOpacity>
 
-          <Text style={styles.title}>
-            {store?.toUpperCase() || 'Scan'}
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {store?.toUpperCase() || t('addCard.scan.title')}
           </Text>
 
           <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
-            <X size={24} color={COLORS.textPrimary} />
+            <X size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.instruction}>
-          Scan your card's barcode or QR code
+        <Text style={[styles.instruction, { color: colors.textSecondary }]}>
+          {t('addCard.scan.instruction')}
         </Text>
 
         <CodeScanner onCodeScanned={handleCodeScanned} />
 
-        <Text style={styles.fallbackText}>
-          Can't scan your card?
+        <Text style={[styles.fallbackText, { color: colors.textSecondary }]}>
+          {t('addCard.scan.manual')}
         </Text>
 
-        <TouchableOpacity style={styles.manualBtn} onPress={handleManual}>
-          <Text style={styles.manualBtnText}>Enter Manually</Text>
+        <TouchableOpacity 
+          style={[styles.manualBtn, { borderColor: colors.textPrimary }]} 
+          onPress={handleManual}
+        >
+          <Text style={[styles.manualBtnText, { color: colors.textPrimary }]}>
+            {t('addCard.scan.enterManually')}
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     </>
@@ -82,7 +89,6 @@ export default function ScanScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundDark,
     alignItems: 'center',
     paddingTop: Platform.OS === 'android' ? 48 : 0,
     paddingHorizontal: 16,
@@ -98,30 +104,25 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   title: {
-    color: COLORS.textPrimary,
     fontSize: 18,
     fontWeight: '600',
   },
   instruction: {
     marginTop: 16,
-    color: COLORS.textSecondary,
     fontSize: 14,
   },
   fallbackText: {
     marginTop: 32,
-    color: COLORS.textSecondary,
     fontSize: 14,
   },
   manualBtn: {
     marginTop: 8,
     borderWidth: 1,
-    borderColor: COLORS.textPrimary,
     borderRadius: 24,
     paddingHorizontal: 32,
     paddingVertical: 12,
   },
   manualBtnText: {
-    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },

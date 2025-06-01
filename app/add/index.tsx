@@ -11,13 +11,15 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-
-import { COLORS } from '@/constants/Colors';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/hooks/useTheme';
 import { POPULAR_CARDS } from '@/assets/cards';
 import Header from '@/components/Header';
 
 export default function AddCardScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
+  const { colors } = useTheme();
   const [query, setQuery] = useState('');
 
   const filtered = POPULAR_CARDS.filter((c) =>
@@ -29,24 +31,32 @@ export default function AddCardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header title="Choose a Card" showBack={true} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
+      <Header title={t('addCard.title')} showBack={true} />
 
       <TextInput
-        style={styles.searchInput}
-        placeholder="Search cards..."
-        placeholderTextColor={COLORS.textSecondary}
+        style={[styles.searchInput, { 
+          backgroundColor: colors.backgroundMedium,
+          color: colors.textPrimary 
+        }]}
+        placeholder={t('addCard.scan.manual')}
+        placeholderTextColor={colors.textSecondary}
         value={query}
         onChangeText={setQuery}
         autoCorrect={false}
         clearButtonMode="while-editing"
       />
 
-      <Text style={styles.sectionTitle}>Popular Cards</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+        {t('cards.sections.all')}
+      </Text>
+
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={() => (
+          <View style={[styles.separator, { backgroundColor: colors.backgroundMedium }]} />
+        )}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.itemRow}
@@ -54,7 +64,9 @@ export default function AddCardScreen() {
             activeOpacity={0.7}
           >
             <Image source={item.logo} style={styles.logo} />
-            <Text style={styles.itemText}>{item.name}</Text>
+            <Text style={[styles.itemText, { color: colors.textPrimary }]}>
+              {item.name}
+            </Text>
           </TouchableOpacity>
         )}
         contentContainerStyle={{
@@ -69,20 +81,16 @@ export default function AddCardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundDark,
   },
   searchInput: {
     height: 44,
-    backgroundColor: COLORS.backgroundMedium,
     borderRadius: 22,
     paddingHorizontal: 16,
-    color: COLORS.textPrimary,
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 8,
   },
   sectionTitle: {
-    color: COLORS.textPrimary,
     fontSize: 20,
     fontWeight: '700',
     marginHorizontal: 16,
@@ -101,13 +109,11 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   itemText: {
-    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '500',
   },
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: COLORS.backgroundMedium,
     marginHorizontal: 16,
   },
 });

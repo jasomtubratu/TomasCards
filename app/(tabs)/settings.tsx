@@ -10,12 +10,14 @@ import {
   Platform
 } from 'react-native';
 import { Import as SortAsc, Vibrate, Fingerprint, Trash2, Coffee, Info, User, Moon, Sun, Monitor } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { AppSettings, SortOption, ThemeMode } from '@/utils/types';
 import { loadSettings, saveSettings, loadCards, saveCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
-import { lightHaptic, mediumHaptic } from '@/utils/feedback';
+import LanguageSelector from '@/components/LanguageSelector';
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const { colors, themeMode } = useTheme();
   const [settings, setSettings] = useState<AppSettings>({
     sortOption: 'alphabetical',
@@ -44,22 +46,22 @@ export default function SettingsScreen() {
     await mediumHaptic();
 
     if (Platform.OS === 'web') {
-      if (confirm('Are you sure you want to delete all loyalty cards? This action cannot be undone.')) {
+      if (confirm(t('settings.deleteAll.confirm'))) {
         await deleteAllCards();
       }
       return;
     }
 
     Alert.alert(
-      'Delete All Cards',
-      'Are you sure you want to delete all loyalty cards? This action cannot be undone.',
+      t('settings.deleteAll.title'),
+      t('settings.deleteAll.confirm'),
       [
         {
-          text: 'Cancel',
+          text: t('common.buttons.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Delete',
+          text: t('common.buttons.delete'),
           style: 'destructive',
           onPress: deleteAllCards,
         },
@@ -79,33 +81,38 @@ export default function SettingsScreen() {
       ...settings,
       themeMode: newTheme,
     });
-
   };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.backgroundDark }]} contentContainerStyle={styles.content}>
       {/* Preferences Section */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>My Account</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+          {t('settings.sections.account')}
+        </Text>
 
         <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
           <View style={styles.settingLeft}>
             <User size={24} color={colors.textSecondary} />
             <View style={styles.settingTextContainer}>
               <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                Log In / Sign Up
+                {t('settings.sections.account')}
               </Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                Manage your account and sync cards across devices
+                {t('settings.login')}
               </Text>
             </View>
           </View>
         </View>
       </View>
 
-      {/* Theme Section */}
+      {/* Language Section */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Appearance</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+          {t('settings.sections.appearance')}
+        </Text>
+        
+        <LanguageSelector />
 
         <TouchableOpacity
           style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
@@ -114,7 +121,9 @@ export default function SettingsScreen() {
           <View style={styles.settingLeft}>
             <Sun size={24} color={colors.textSecondary} />
             <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Light Mode</Text>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.theme.light')}
+              </Text>
             </View>
           </View>
           {settings.themeMode === 'light' && (
@@ -129,7 +138,9 @@ export default function SettingsScreen() {
           <View style={styles.settingLeft}>
             <Moon size={24} color={colors.textSecondary} />
             <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Dark Mode</Text>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.theme.dark')}
+              </Text>
             </View>
           </View>
           {settings.themeMode === 'dark' && (
@@ -144,9 +155,11 @@ export default function SettingsScreen() {
           <View style={styles.settingLeft}>
             <Monitor size={24} color={colors.textSecondary} />
             <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>System</Text>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.theme.system')}
+              </Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                Follow system appearance settings
+                {t('settings.theme.systemDescription')}
               </Text>
             </View>
           </View>
@@ -158,7 +171,9 @@ export default function SettingsScreen() {
 
       {/* Data Management Section */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Data Management</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+          {t('settings.sections.data')}
+        </Text>
 
         <TouchableOpacity
           style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
@@ -167,9 +182,11 @@ export default function SettingsScreen() {
           <View style={styles.settingLeft}>
             <Trash2 size={24} color={colors.error} />
             <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Delete All Cards</Text>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.deleteAll.title')}
+              </Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                Permanently remove all loyalty cards
+                {t('settings.deleteAll.description')}
               </Text>
             </View>
           </View>
@@ -178,15 +195,16 @@ export default function SettingsScreen() {
 
       {/* About Section */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>About</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+          {t('settings.sections.about')}
+        </Text>
 
         <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
           <View style={styles.settingLeft}>
             <Info size={24} color={colors.textSecondary} />
             <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Version</Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                TomasCards v1.0.0 ALPHA
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.version', { version: '1.0.0 ALPHA' })}
               </Text>
             </View>
           </View>
@@ -196,9 +214,11 @@ export default function SettingsScreen() {
           <View style={styles.settingLeft}>
             <Coffee size={24} color={colors.textSecondary} />
             <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Support Development</Text>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.support.title')}
+              </Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                Help keep this app ad-free. Your support is appreciated! 
+                {t('settings.support.description')}
               </Text>
             </View>
           </View>

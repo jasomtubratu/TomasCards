@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { Save } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { addCard } from '@/utils/storage';
 import type { LoyaltyCard } from '@/utils/types';
 import { POPULAR_CARDS } from '@/assets/cards';
@@ -20,6 +21,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { lightHaptic } from '@/utils/feedback';
 
 export default function ManualEntryScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
   const { store } = useLocalSearchParams<{ store?: string }>();
@@ -27,15 +29,13 @@ export default function ManualEntryScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // find store metadata
   const meta = POPULAR_CARDS.find((c) => c.id === store);
   const name = meta?.name ?? '';
-  // fallback color for manual entries
   const color = meta?.color ?? colors.accent;
 
   const handleSave = async () => {
     if (!code.trim()) {
-      setError('Please enter a valid code');
+      setError(t('common.validation.required'));
       return;
     }
 
@@ -55,7 +55,7 @@ export default function ManualEntryScreen() {
       await addCard(newCard);
       router.replace(`/card/${newCard.id}`);
     } catch (err) {
-      setError('Failed to save card. Please try again.');
+      setError(t('common.validation.invalid'));
       setLoading(false);
     }
   };
@@ -63,7 +63,7 @@ export default function ManualEntryScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
       <Header
-        title={store ? `Add ${name} Card` : 'Add Card'}
+        title={store ? t('addCard.manual.title', { store: name }) : t('addCard.manual.title')}
         showBack={true}
       />
 
@@ -90,7 +90,7 @@ export default function ManualEntryScreen() {
 
               <View style={styles.inputContainer}>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  Card Number
+                  {t('addCard.manual.cardNumber')}
                 </Text>
                 <TextInput
                   style={[
@@ -106,7 +106,7 @@ export default function ManualEntryScreen() {
                     setCode(text);
                     setError('');
                   }}
-                  placeholder="Enter card number"
+                  placeholder={t('addCard.manual.cardNumberPlaceholder')}
                   placeholderTextColor={colors.textHint}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -131,7 +131,7 @@ export default function ManualEntryScreen() {
             >
               <Save size={20} color={colors.textPrimary} />
               <Text style={[styles.saveButtonText, { color: colors.textPrimary }]}>
-                {loading ? 'Saving...' : 'Save Card'}
+                {loading ? t('common.labels.loading') : t('common.buttons.save')}
               </Text>
             </TouchableOpacity>
           </View>

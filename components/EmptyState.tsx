@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { CreditCard } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 
 interface EmptyStateProps {
@@ -8,14 +9,17 @@ interface EmptyStateProps {
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({ 
-  message = 'No loyalty cards yet. Tap the "Add" tab to add your first card.'
+  message = 'cards.empty'
 }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
       <CreditCard size={80} color={colors.textSecondary} strokeWidth={1.5} />
-      <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
+      <Text style={[styles.message, { color: colors.textSecondary }]}>
+        {t(message)}
+      </Text>
     </View>
   );
 };

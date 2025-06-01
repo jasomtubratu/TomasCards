@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 
 interface HeaderProps {
@@ -11,7 +12,8 @@ interface HeaderProps {
   onBack?: () => void;
 }
 
-export default function Header({ title, showBack = true, rightElement }: HeaderProps) {
+export default function Header({ title, showBack = true, rightElement, onBack }: HeaderProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
 
@@ -22,7 +24,11 @@ export default function Header({ title, showBack = true, rightElement }: HeaderP
     }]}>
       <View style={styles.leftSection}>
         {showBack && (
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity 
+            onPress={onBack || (() => router.back())} 
+            style={styles.backButton}
+            accessibilityLabel={t('common.buttons.back')}
+          >
             <ArrowLeft size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
