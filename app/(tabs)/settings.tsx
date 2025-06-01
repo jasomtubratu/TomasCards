@@ -15,10 +15,11 @@ import { AppSettings, SortOption, ThemeMode } from '@/utils/types';
 import { loadSettings, saveSettings, loadCards, saveCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
 import LanguageSelector from '@/components/LanguageSelector';
+import { lightHaptic } from '@/utils/feedback';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
-  const { colors, themeMode } = useTheme();
+  const { colors, themeMode, setThemeMode } = useTheme();
   const [settings, setSettings] = useState<AppSettings>({
     sortOption: 'alphabetical',
     hapticFeedback: true,
@@ -43,7 +44,7 @@ export default function SettingsScreen() {
 
   // Delete all cards
   const confirmDeleteAllCards = async () => {
-    await mediumHaptic();
+    await lightHaptic();
 
     if (Platform.OS === 'web') {
       if (confirm(t('settings.deleteAll.confirm'))) {
@@ -72,15 +73,18 @@ export default function SettingsScreen() {
   // Delete all cards
   const deleteAllCards = async () => {
     await saveCards([]);
-    await mediumHaptic();
+    await lightHaptic();
   };
 
   const handleThemeChange = async (newTheme: ThemeMode) => {
-    await lightHaptic();
+    if (Platform.OS !== 'web') {
+      await lightHaptic();
+    }
     await updateSettings({
       ...settings,
       themeMode: newTheme,
     });
+    setThemeMode(newTheme);
   };
 
   return (

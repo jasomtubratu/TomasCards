@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
-import { loadSettings } from '@/utils/storage';
+import { loadSettings, saveSettings } from '@/utils/storage';
 import { LIGHT_COLORS, DARK_COLORS } from '@/constants/Colors';
-import type { ThemeMode } from '@/utils/types';
+import type { ThemeMode, AppSettings } from '@/utils/types';
 
 export function useTheme() {
   const systemColorScheme = useColorScheme();
@@ -23,9 +23,19 @@ export function useTheme() {
     setColors(isDark ? DARK_COLORS : LIGHT_COLORS);
   }, [themeMode, systemColorScheme]);
 
+  const updateThemeMode = async (newThemeMode: ThemeMode) => {
+    setThemeMode(newThemeMode);
+    const settings = await loadSettings();
+    await saveSettings({
+      ...settings,
+      themeMode: newThemeMode,
+    });
+  };
+
   return {
     colors,
     isDark: colors === DARK_COLORS,
     themeMode,
+    setThemeMode: updateThemeMode,
   };
 }
