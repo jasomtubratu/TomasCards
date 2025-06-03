@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -19,7 +18,7 @@ export default function LoyaltyCardComponent({ card, onPress }: Props) {
   const { colors } = useTheme();
   
   const matchedCard = POPULAR_CARDS.find(
-    (item) => item.brand?.toLowerCase() === card.name.toLowerCase()
+    (item) => item.id?.toLowerCase() === card.brand?.toLowerCase()
   );
 
   const logoSource: ImageSourcePropType | null = matchedCard

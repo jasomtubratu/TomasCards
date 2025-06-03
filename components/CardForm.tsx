@@ -128,7 +128,7 @@ const CardForm: React.FC<CardFormProps> = ({
             disabled={!name.trim() || !code.trim() || loading}
           >
             {loading ? (
-              <ActivityIndicator size="small\" color={colors.textPrimary} />
+              <ActivityIndicator size="small" color={colors.textPrimary} />
             ) : (
               <>
                 <Save size={20} color={colors.textPrimary} />

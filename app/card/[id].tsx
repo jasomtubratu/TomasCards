@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Image,
   Alert,
   Modal,
   TouchableWithoutFeedback,
+  ImageSourcePropType,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Pencil, Star, Trash2, X } from 'lucide-react-native';
@@ -22,6 +24,7 @@ import { useTheme } from '@/hooks/useTheme';
 import BarcodeRenderer from '@/components/BarcodeRenderer';
 import CardForm from '@/components/CardForm';
 import Header from '@/components/Header';
+import { POPULAR_CARDS } from '@/assets/cards';
 
 export default function CardDetailScreen() {
   const { t } = useTranslation();
@@ -31,6 +34,10 @@ export default function CardDetailScreen() {
   const [card, setCard] = useState<LoyaltyCard | null>(null);
   const [isEditing, setIsEditing] = useState(edit === 'true');
   const [loading, setLoading] = useState(true);
+
+    const matchedCard = card ? POPULAR_CARDS.find(
+      (item) => item.id?.toLowerCase() === card.brand?.toLowerCase()
+    ) : undefined;
 
   useEffect(() => {
     const loadCardData = async () => {
@@ -118,6 +125,11 @@ export default function CardDetailScreen() {
     );
   }
 
+    const logoSource: ImageSourcePropType | null = matchedCard
+      ? (matchedCard.logo as ImageSourcePropType)
+      : null;
+  
+
   return (
     <View style={[styles.mainContainer, { backgroundColor: colors.backgroundDark }]}>
       <Header
@@ -138,9 +150,15 @@ export default function CardDetailScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.cardHeader}>
           <View style={[styles.logoPlaceholder, { backgroundColor: card.color }]}>
-            <Text style={[styles.logoPlaceholderText, { color: colors.textPrimary }]}>
-              {card.name.charAt(0).toUpperCase()}
-            </Text>
+          {logoSource ? (
+                    <Image
+                      source={logoSource}
+                      style={styles.logo}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Text style={[styles.logoPlaceholderText, { color: colors.textPrimary }]}>{card.name.charAt(0)}</Text>
+                  )}
           </View>
           <Text style={[styles.cardName, { color: colors.textPrimary }]}>{card.name}</Text>
         </View>
@@ -376,5 +394,9 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
+  },
+  logo: {
+    width: 56,
+    height: 56,
   },
 });
