@@ -30,33 +30,31 @@ const CardForm: React.FC<CardFormProps> = ({
 }) => {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState(existingCard?.name || '');
   const [code, setCode] = useState(existingCard?.code || '');
-  const [codeType, setCodeType] = useState<'barcode' | 'qrcode'>(
-    existingCard?.codeType || 'barcode'
-  );
   const [notes, setNotes] = useState(existingCard?.notes || '');
 
   const handleSubmit = async () => {
-    if (!name.trim() || !code.trim()) {
+    if (!code.trim()) {
       return;
     }
 
     setLoading(true);
     
     try {
-      const cardData: LoyaltyCard = {
-        id: existingCard?.id || Date.now().toString(),
-        name: name.trim(),
-        code: code.trim(),
-        codeType,
-        color: existingCard?.color || colors.accent,
-        notes: notes.trim(),
-        dateAdded: existingCard?.dateAdded || Date.now(),
-        lastUsed: existingCard?.lastUsed,
-      };
-      
-      await onSave(cardData);
+      const trimmedCode = code.trim();
+      const trimmedNotes = notes.trim();
+
+      let cardToSave: LoyaltyCard;
+
+      if (existingCard) {
+        cardToSave = {
+          ...existingCard,
+          code: trimmedCode,
+          notes: trimmedNotes,
+        };
+        await onSave(cardToSave);
+      } 
+
       if (Platform.OS !== 'web') {
         await successHaptic();
       }
@@ -100,8 +98,14 @@ const CardForm: React.FC<CardFormProps> = ({
               placeholderTextColor={colors.textHint}
               keyboardType="default"
             />
+            {onScanPress && (
+              <TouchableOpacity onPress={handleScanPress} style={{ marginLeft: 8 }}>
+                <XCircle size={24} color={colors.textHint} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
+
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: colors.textPrimary }]}>Notes (Optional)</Text>
           <TextInput
@@ -117,15 +121,30 @@ const CardForm: React.FC<CardFormProps> = ({
             numberOfLines={3}
           />
         </View>
+
         <View style={styles.actions}>
+          {onCancel && (
+            <TouchableOpacity
+              style={[
+                styles.cancelButton,
+                { backgroundColor: colors.backgroundMedium }
+              ]}
+              onPress={onCancel}
+            >
+              <Text style={[styles.cancelButtonText, { color: colors.textPrimary }]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity 
             style={[
               styles.saveButton,
-              (!name.trim() || !code.trim()) && styles.saveButtonDisabled,
+              (!code.trim() || loading) && styles.saveButtonDisabled,
               { backgroundColor: colors.accent }
             ]}
             onPress={handleSubmit}
-            disabled={!name.trim() || !code.trim() || loading}
+            disabled={!code.trim() || loading}
           >
             {loading ? (
               <ActivityIndicator size="small" color={colors.textPrimary} />

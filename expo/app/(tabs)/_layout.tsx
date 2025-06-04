@@ -25,12 +25,6 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="add"
-        options={{
-          title: 'Add Card',
-          tabBarLabel: 'Add',
-          tabBarIcon: ({ color, size }) => <PlusCircle size={size} color={color} />,
-          href: null,
-        }}
       />
       <Tabs.Screen
         name="settings"
