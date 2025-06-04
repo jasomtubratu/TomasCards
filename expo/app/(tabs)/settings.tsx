@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import {
   View,
   Text,
@@ -17,16 +17,62 @@ import { useTheme } from '@/hooks/useTheme';
 import LanguageSelector from '@/components/LanguageSelector';
 import { lightHaptic } from '@/utils/feedback';
 import ThemeSelector from '@/components/ThemeSelector';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { colors, themeMode, setThemeMode } = useTheme();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState(false);
+  const [email, setEmail] = useState('');
   const [settings, setSettings] = useState<AppSettings>({
     sortOption: 'alphabetical',
     hapticFeedback: true,
     secureWithBiometrics: false,
     themeMode: 'system',
   });
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      setLoadingStatus(true);
+      const token = await AsyncStorage.getItem('authToken');
+      fetchUserData();
+      setIsLoggedIn(!!token);
+
+    };
+    checkLoginStatus();
+  }, []);
+
+  // useEffect to load settings account username and refresh token from API
+  function fetchUserData() {
+    setLoadingStatus(true);
+
+    const response = fetch('http://localhost:3000/me', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${AsyncStorage.getItem('authToken') || ''}`,
+      },
+      method: 'GET',
+    });
+    response.then((res) => {
+      if (res.ok) {
+        return res.json();
+      } else {
+        console.error('Failed to fetch user data:', res.statusText);
+        throw new Error('Failed to fetch user data');
+      }
+    }
+    ).then((data) => {
+      setLoadingStatus(false);
+      setEmail(data.email || '');
+      AsyncStorage.setItem('authToken', data.token || '');
+    }).catch((error) => {
+      console.error('Error fetching user data:', error);
+    });
+  }
 
   // Load settings once
   useEffect(() => {
@@ -92,24 +138,70 @@ export default function SettingsScreen() {
       contentContainerStyle={styles.content}
     >
       {/* Account Section */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          {t('settings.sections.account')}
-        </Text>
-        <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
-          <View style={styles.settingLeft}>
-            <User size={24} color={colors.textSecondary} />
-            <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                {t('settings.sections.account')}
-              </Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {t('settings.login')}
-              </Text>
+      {isLoggedIn ? (
+        <TouchableOpacity
+          style={styles.section}
+          onPress={() =>
+            Alert.alert(
+              t('settings.logout.title'),
+              t('settings.logout.confirm'),
+              [
+                {
+                  text: t('common.buttons.cancel'),
+                  style: 'cancel',
+                },
+                {
+                  text: t('common.buttons.logout'),
+                  style: 'destructive',
+                  onPress: async () => {
+                    await AsyncStorage.removeItem('authToken');
+                    setIsLoggedIn(false);
+                  },
+                },
+              ]
+            )
+          }
+        >
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            {t('settings.sections.account')}
+          </Text>
+          <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
+            <View style={styles.settingLeft}>
+              <User size={24} color={colors.textSecondary} />
+              <View style={styles.settingTextContainer}>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                  Hi! {email.split('@')[0]}
+                </Text>
+                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                  {t('settings.logout')}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-      </View>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.section}
+          onPress={() => router.push('/auth/login')}
+        >
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            {t('settings.sections.account')}
+          </Text>
+          <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
+            <View style={styles.settingLeft}>
+              <User size={24} color={colors.textSecondary} />
+              <View style={styles.settingTextContainer}>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                  {t('settings.sections.account')}
+                </Text>
+                <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                  {t('settings.login')}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+      )}
 
       {/* Appearance Section */}
       <View style={styles.section}>

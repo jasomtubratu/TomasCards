@@ -90,7 +90,7 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ error: "User not found" });
+  if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(401).json({ error: "Invalid credentials" });
@@ -101,8 +101,20 @@ app.post("/login", async (req, res) => {
 
 // Profile route with rolling token refresh
 app.get("/me", authMiddleware, (req, res) => {
-  const newToken = generateToken(req.userId);
-  res.json({ userId: req.userId, token: newToken });
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.sendStatus(401);
+  // verify token
+  try {
+    jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.sendStatus(403);
+  }  
+  // get user id from jwt payload
+  const userID = jwt.decode(token).id;
+  const newToken = generateToken(userID);
+  // return user email and new token
+  const emailovaadresa = User.findById(userID).then(user => user.email);
+  res.json({ email: emailovaadresa, token: newToken });
 });
 
 // Loyalty cards routes
