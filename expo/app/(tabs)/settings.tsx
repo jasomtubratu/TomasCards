@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -47,31 +47,25 @@ export default function SettingsScreen() {
   }, []);
 
   // useEffect to load settings account username and refresh token from API
-  function fetchUserData() {
+  async function fetchUserData() {
     setLoadingStatus(true);
-
-    const response = fetch('http://localhost:3000/me', {
+    const token = await AsyncStorage.getItem('authToken') || '';
+    const response = await fetch('http://localhost:3000/me', {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${AsyncStorage.getItem('authToken') || ''}`,
+        'Authorization': `Bearer ${token}`,
       },
       method: 'GET',
     });
-    response.then((res) => {
-      if (res.ok) {
-        return res.json();
-      } else {
-        console.error('Failed to fetch user data:', res.statusText);
-        throw new Error('Failed to fetch user data');
-      }
-    }
-    ).then((data) => {
-      setLoadingStatus(false);
+    if (response.ok) {
+      const data = await response.json();
+      console.log(data);
       setEmail(data.email || '');
-      AsyncStorage.setItem('authToken', data.token || '');
-    }).catch((error) => {
-      console.error('Error fetching user data:', error);
-    });
+      await AsyncStorage.setItem('authToken', data.token || '');
+    } else {
+      console.error('Failed to fetch user data:', response.statusText);
+    }
+    setLoadingStatus(false);
   }
 
   // Load settings once
@@ -170,7 +164,7 @@ export default function SettingsScreen() {
               <User size={24} color={colors.textSecondary} />
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                  Hi! {email.split('@')[0]}
+                  Hi {email.split('@')[0].toUpperCase()}!
                 </Text>
                 <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                   {t('settings.logout')}

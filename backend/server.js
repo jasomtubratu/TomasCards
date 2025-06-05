@@ -100,7 +100,7 @@ app.post("/login", async (req, res) => {
 });
 
 // Profile route with rolling token refresh
-app.get("/me", authMiddleware, (req, res) => {
+app.get("/me", authMiddleware, async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.sendStatus(401);
   // verify token
@@ -112,9 +112,9 @@ app.get("/me", authMiddleware, (req, res) => {
   // get user id from jwt payload
   const userID = jwt.decode(token).id;
   const newToken = generateToken(userID);
-  // return user email and new token
-  const emailovaadresa = User.findById(userID).then(user => user.email);
-  res.json({ email: emailovaadresa, token: newToken });
+  // retrieve user's email from database
+  const user = await User.findById(userID).select("email");
+  res.json({ email: user?.email || null, token: newToken });
 });
 
 // Loyalty cards routes
