@@ -7,7 +7,8 @@
       "edit": "Edit",
       "close": "Close",
       "back": "Back",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "logout": "Logout"
     },
     "labels": {
       "name": "Name",
@@ -21,6 +22,55 @@
     "validation": {
       "required": "This field is required",
       "invalid": "Invalid value"
+    },
+    "offline": {
+      "banner": "Offline Mode Active - Using local data"
+    }
+  },
+  "auth": {
+    "login": {
+      "welcome": "Welcome Back",
+      "subtitle": "Sign in to your account",
+      "signIn": "Sign In",
+      "forgotPassword": "Forgot Password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign Up"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Join TomasCards today",
+      "createAccount": "Create Account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign In"
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email to receive reset instructions",
+      "sendResetLink": "Send Reset Link",
+      "emailSent": "Email Sent!",
+      "checkEmail": "Check your email for reset instructions",
+      "backToLogin": "Back to Login"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your new password",
+      "resetPassword": "Reset Password",
+      "success": "Password Reset!",
+      "successMessage": "Your password has been successfully reset",
+      "backToLogin": "Back to Login"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "newPassword": "New Password"
+    },
+    "validation": {
+      "allFieldsRequired": "All fields are required",
+      "emailRequired": "Email is required",
+      "passwordRequirements": "Password must be at least 8 characters with uppercase, lowercase, number and special character",
+      "passwordRequirementsText": "Password must contain at least 8 characters, including uppercase, lowercase, numbers, and special characters",
+      "passwordsDoNotMatch": "Passwords do not match"
     }
   },
   "tabs": {
@@ -66,6 +116,11 @@
   },
   "settings": {
     "title": "Settings",
+    "login": "Sign in to sync your cards",
+    "logout": {
+      "title": "Sign Out",
+      "confirm": "Are you sure you want to sign out?"
+    },
     "sections": {
       "account": "My Account",
       "appearance": "Appearance",
@@ -83,7 +138,12 @@
       "dark": "Dark Mode",
       "system": "System",
       "systemDescription": "Follow system appearance",
+      "available": "Choose Theme",
       "confirmChange": "Changing the theme requires a restart to apply properly. Do you want to continue?"
+    },
+    "haptic": {
+      "title": "Haptic Feedback",
+      "description": "Feel vibrations for interactions"
     },
     "csupport": {
       "title": "Support",

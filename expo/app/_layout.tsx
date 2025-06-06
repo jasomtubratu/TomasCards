@@ -1,21 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider } from '@/hooks/useTheme';
+import { AuthProvider } from '@/hooks/useAuth';
 import { initializeLanguage } from '@/utils/i18n';
-import { loadCards, loadSettings } from '@/utils/storage';
+import { loadSettings } from '@/utils/storage';
 import SplashScreen from '@/components/SplashScreen';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AuthGuard from '@/components/AuthGuard';
 
 export default function RootLayout() {
   useFrameworkReady();
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
   const [loadingMessage, setLoadingMessage] = useState('');
-  const isLoggedIn = AsyncStorage.getItem('authToken') !== null;
 
   useEffect(() => {
     async function initializeApp() {
@@ -25,27 +24,6 @@ export default function RootLayout() {
 
         setLoadingMessage('Loading settings...');
         await loadSettings();
-
-        setLoadingMessage('Logging in...');
-        if (isLoggedIn) {
-          const token = await AsyncStorage.getItem('authToken');
-          const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/me`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            method: 'GET',
-          });
-          if (response.status === 404) {
-            await AsyncStorage.removeItem('authToken');
-            return;
-          } else if (response.status !== 200) {
-            await loadCards();
-            router.push("/");
-          } else {
-            router.push("/");
-          }
-        }
         
         await new Promise(resolve => setTimeout(resolve, 500));
         
@@ -62,16 +40,20 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      {isLoading ? (
-        <SplashScreen message={loadingMessage} />
-      ) : (
-        <GestureHandlerRootView style={styles.container}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="+not-found" options={{headerShown: false}}/>
-          </Stack>
-          <StatusBar style="auto" />
-        </GestureHandlerRootView>
-      )}
+      <AuthProvider>
+        {isLoading ? (
+          <SplashScreen message={loadingMessage} />
+        ) : (
+          <GestureHandlerRootView style={styles.container}>
+            <AuthGuard>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="+not-found" options={{headerShown: false}}/>
+              </Stack>
+              <StatusBar style="auto" />
+            </AuthGuard>
+          </GestureHandlerRootView>
+        )}
+      </AuthProvider>
     </ThemeProvider>
   );
 }

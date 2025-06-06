@@ -7,7 +7,8 @@
       "edit": "Upraviť",
       "close": "Zavrieť",
       "back": "Späť",
-      "confirm": "Potvrdiť"
+      "confirm": "Potvrdiť",
+      "logout": "Odhlásiť sa"
     },
     "labels": {
       "name": "Názov",
@@ -21,6 +22,55 @@
     "validation": {
       "required": "Toto pole je povinné",
       "invalid": "Neplatná hodnota"
+    },
+    "offline": {
+      "banner": "Offline režim aktívny - Používajú sa lokálne údaje"
+    }
+  },
+  "auth": {
+    "login": {
+      "welcome": "Vitajte späť",
+      "subtitle": "Prihláste sa do svojho účtu",
+      "signIn": "Prihlásiť sa",
+      "forgotPassword": "Zabudli ste heslo?",
+      "noAccount": "Nemáte účet?",
+      "signUp": "Registrovať sa"
+    },
+    "register": {
+      "title": "Vytvoriť účet",
+      "subtitle": "Pripojte sa k TomasCards dnes",
+      "createAccount": "Vytvoriť účet",
+      "haveAccount": "Už máte účet?",
+      "signIn": "Prihlásiť sa"
+    },
+    "forgotPassword": {
+      "title": "Obnoviť heslo",
+      "subtitle": "Zadajte svoj email pre obnovenie hesla",
+      "sendResetLink": "Poslať odkaz na obnovenie",
+      "emailSent": "Email odoslaný!",
+      "checkEmail": "Skontrolujte si email pre pokyny na obnovenie",
+      "backToLogin": "Späť na prihlásenie"
+    },
+    "resetPassword": {
+      "title": "Obnoviť heslo",
+      "subtitle": "Zadajte svoje nové heslo",
+      "resetPassword": "Obnoviť heslo",
+      "success": "Heslo obnovené!",
+      "successMessage": "Vaše heslo bolo úspešne obnovené",
+      "backToLogin": "Späť na prihlásenie"
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Heslo",
+      "confirmPassword": "Potvrdiť heslo",
+      "newPassword": "Nové heslo"
+    },
+    "validation": {
+      "allFieldsRequired": "Všetky polia sú povinné",
+      "emailRequired": "Email je povinný",
+      "passwordRequirements": "Heslo musí mať aspoň 8 znakov s veľkým písmenom, malým písmenom, číslom a špeciálnym znakom",
+      "passwordRequirementsText": "Heslo musí obsahovať aspoň 8 znakov, vrátane veľkých a malých písmen, čísiel a špeciálnych znakov",
+      "passwordsDoNotMatch": "Heslá sa nezhodujú"
     }
   },
   "tabs": {
@@ -66,6 +116,11 @@
   },
   "settings": {
     "title": "Nastavenia",
+    "login": "Prihláste sa pre synchronizáciu kariet",
+    "logout": {
+      "title": "Odhlásiť sa",
+      "confirm": "Naozaj sa chcete odhlásiť?"
+    },
     "sections": {
       "account": "Môj účet",
       "appearance": "Vzhľad",
@@ -83,12 +138,25 @@
       "dark": "Tmavý režim",
       "system": "Systémová",
       "systemDescription": "Podľa systémového nastavenia",
+      "available": "Vybrať tému",
       "confirmChange": "Zmena témy vyžaduje reštart aplikácie pre správne použitie. Chcete pokračovať?"
+    },
+    "haptic": {
+      "title": "Hmatová odozva",
+      "description": "Pocíťte vibrácie pri interakciách"
     },
     "deleteAll": {
       "title": "Vymazať všetky karty",
       "description": "Natrvalo odstrániť všetky vernostné karty",
       "confirm": "Naozaj chcete vymazať všetky karty?"
+    },
+    "csupport": {
+      "title": "Podpora",
+      "contact": "Kontaktovať podporu",
+      "description": "Ak máte otázky alebo potrebujete pomoc, kontaktujte nás na help@tomascards.fun.",
+      "faq": "FAQ",
+      "privacyPolicy": "Zásady ochrany súkromia",
+      "termsOfService": "Podmienky služby"
     },
     "version": "Verzia {{version}}"
   }

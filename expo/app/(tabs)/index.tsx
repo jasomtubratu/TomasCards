@@ -15,9 +15,12 @@ import { useTranslation } from 'react-i18next';
 import type { LoyaltyCard } from '@/utils/types';
 import { loadCards, saveCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useAuth } from '@/hooks/useAuth';
 import LoyaltyCardComponent from '@/components/LoyaltyCard';
 import Header from '@/components/Header';
 import EmptyState from '@/components/EmptyState';
+import OfflineBanner from '@/components/OfflineBanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type SortType = 'name' | 'date' | 'lastUsed';
@@ -28,12 +31,13 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
+  const { isOnline } = useNetworkStatus();
+  const { isAuthenticated } = useAuth();
   const [cards, setCards] = useState<LoyaltyCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sortType, setSortType] = useState<SortType>('name');
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const [internetStatus, setInternetStatus] = useState<'online' | 'offline'>('offline');
 
   const loadCardData = useCallback(async () => {
     try {
@@ -47,46 +51,63 @@ export default function HomeScreen() {
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
-    const loggedIn = await AsyncStorage.getItem("authToken");
-    if (!loggedIn) {
+    if (!isAuthenticated) {
       setLoading(false);
-      router.push('/auth/login');
       return;
-    } else {
+    }
+
+    setLoading(true);
+    const token = await AsyncStorage.getItem("authToken");
+    
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    if (isOnline) {
       try {
         const response = await fetch(`${API_URL}/cards`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${loggedIn}`,
+            'Authorization': `Bearer ${token}`,
           },
         });
-        if (!response.ok) {
-          loadCardData();
-          setInternetStatus('offline');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setCards(data);
+          await saveCards(data);
+        } else {
+          // Server error, fall back to local data
+          await loadCardData();
         }
-        setInternetStatus('online');
-        const data = await response.json();
-        setCards(data);
-        saveCards(data);
       } catch (error) {
         console.error('Error fetching cards from server:', error);
-        loadCardData();
-        setInternetStatus('offline');
-      } finally {
-        setLoading(false);
+        // Network error, fall back to local data
+        await loadCardData();
       }
+    } else {
+      // Offline mode, load from local storage
+      await loadCardData();
     }
+    
+    setLoading(false);
   };
 
   useEffect(() => {
-    console.log('Internet status:', internetStatus);
-  }, [internetStatus]);
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isOnline, isAuthenticated]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated && !isOnline) {
+        loadCardData();
+      }
+    }, [isOnline, loadCardData, isAuthenticated])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -198,6 +219,8 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
+      <OfflineBanner />
+      
       <Header 
         title={t('cards.title')}
         showBack={false}
@@ -209,14 +232,12 @@ export default function HomeScreen() {
             >
               <ArrowUpDown size={24} color={colors.textPrimary} />
             </TouchableOpacity>
-            {internetStatus !== 'offline' &&
             <TouchableOpacity 
               style={[styles.headerButton, { backgroundColor: colors.backgroundMedium }]}
               onPress={() => router.push('/add')}
             >
               <Plus size={24} color={colors.textPrimary} />
             </TouchableOpacity>
-            }
           </View>
         }
       />

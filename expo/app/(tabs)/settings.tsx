@@ -15,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { AppSettings, ThemeMode } from '@/utils/types';
 import { loadSettings, saveSettings, saveCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import LanguageSelector from '@/components/LanguageSelector';
 import { lightHaptic } from '@/utils/feedback';
 import ThemeSelector from '@/components/ThemeSelector';
@@ -23,11 +25,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors, themeMode, setThemeMode } = useTheme();
+  const { logout } = useAuth();
+  const { isOnline } = useNetworkStatus();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [email, setEmail] = useState('');
@@ -43,32 +46,46 @@ export default function SettingsScreen() {
     const checkLoginStatus = async () => {
       setLoadingStatus(true);
       const token = await AsyncStorage.getItem('authToken');
-      fetchUserData();
-      setIsLoggedIn(!!token);
-
+      if (token) {
+        setIsLoggedIn(true);
+        if (isOnline) {
+          await fetchUserData();
+        }
+      }
+      setLoadingStatus(false);
     };
     checkLoginStatus();
-  }, []);
+  }, [isOnline]);
 
-  // useEffect to load settings account username and refresh token from API
+  // Fetch user data from API when online
   async function fetchUserData() {
+    if (!isOnline) return;
+    
     setLoadingStatus(true);
     const token = await AsyncStorage.getItem('authToken') || '';
-    const response = await fetch(`${API_URL}/me`, {
-      headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      },
-      method: 'GET',
-    });
-    if (response.ok) {
-      const data = await response.json();
-      console.log(data);
-      setEmail(data.email || '');
-      await AsyncStorage.setItem('authToken', data.token || '');
-    } else {
-      console.error('Failed to fetch user data:', response.statusText);
+    
+    try {
+      const response = await fetch(`${API_URL}/me`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        method: 'GET',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEmail(data.email || '');
+        if (data.token) {
+          await AsyncStorage.setItem('authToken', data.token);
+        }
+      } else {
+        console.error('Failed to fetch user data:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Network error fetching user data:', error);
     }
+    
     setLoadingStatus(false);
   }
 
@@ -86,7 +103,28 @@ export default function SettingsScreen() {
     await saveSettings(newSettings);
   };
 
-
+  const handleLogout = async () => {
+    Alert.alert(
+      t('settings.logout.title'),
+      t('settings.logout.confirm'),
+      [
+        {
+          text: t('common.buttons.cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('common.buttons.logout'),
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/auth/login');
+            setIsLoggedIn(false);
+            setEmail('');
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <ScrollView
@@ -95,39 +133,18 @@ export default function SettingsScreen() {
     >
       {/* Account Section */}
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('settings.sections.account')}
-          </Text>
+        {t('settings.sections.account')}
+      </Text>
+      
       {isLoggedIn ? (
-        <TouchableOpacity
-          style={styles.section}
-          onPress={() =>
-            Alert.alert(
-              t('settings.logout.title'),
-              t('settings.logout.confirm'),
-              [
-                {
-                  text: t('common.buttons.cancel'),
-                  style: 'cancel',
-                },
-                {
-                  text: t('common.buttons.logout'),
-                  style: 'destructive',
-                  onPress: async () => {
-                    await AsyncStorage.removeItem('authToken');
-                    router.push('/auth/login');
-                    setIsLoggedIn(false);
-                  },
-                },
-              ]
-            )
-          }
-        >
+        <TouchableOpacity style={styles.section} onPress={handleLogout}>
           <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
             <View style={styles.settingLeft}>
               <User size={24} color={colors.textSecondary} />
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                  Hi {email.split('@')[0].toUpperCase()}!
+                  {email ? `Hi ${email.split('@')[0].toUpperCase()}!` : 'Account'}
+                  {!isOnline && ' (Offline)'}
                 </Text>
                 <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                   {t('settings.logout')}
@@ -137,13 +154,7 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
       ) : (
-        <TouchableOpacity
-          style={styles.section}
-          onPress={() => router.push('/auth/login')}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('settings.sections.account')}
-          </Text>
+        <TouchableOpacity style={styles.section} onPress={() => router.push('/auth/login')}>
           <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
             <View style={styles.settingLeft}>
               <User size={24} color={colors.textSecondary} />
@@ -201,29 +212,12 @@ export default function SettingsScreen() {
         <ThemeSelector />
       </View>
 
-  
-
       {/* About Section */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
           {t('settings.sections.about')}
         </Text>
 
-        {/*
-        <TouchableOpacity style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
-          <View style={styles.settingLeft}>
-            <Coffee size={24} color={colors.textSecondary} />
-            <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                {t('settings.support.title')}
-              </Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {t('settings.support.description')}
-              </Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-        */}
         <TouchableOpacity
           style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
           onPress={() => Linking.openURL('mailto:help@tomascards.fun')}

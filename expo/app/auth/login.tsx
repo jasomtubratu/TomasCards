@@ -11,12 +11,11 @@ import {
   ScrollView,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
 import { lightHaptic } from '@/utils/feedback';
-import Header from '@/components/Header';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -24,6 +23,7 @@ export default function LoginScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -55,11 +55,9 @@ export default function LoginScreen() {
       }
 
       await lightHaptic();
-
-        await AsyncStorage.setItem('authToken', data.token);
+      await login(data.token);
       
-
-      router.replace('/');
+      // The AuthGuard will handle the redirect automatically
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -72,17 +70,17 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: colors.backgroundDark }]}
     >
-    
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-               <TouchableOpacity
+        <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
         >
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
+        
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {t('auth.login.welcome')}
@@ -133,7 +131,6 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.optionsContainer}>
-
             <Link href="/auth/forgot-password" style={[styles.forgotPassword, { color: colors.accent }]}>
               {t('auth.login.forgotPassword')}
             </Link>
@@ -218,23 +215,9 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: 24,
-  },
-  rememberMe: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    marginRight: 8,
-  },
-  rememberMeText: {
-    fontSize: 14,
   },
   forgotPassword: {
     fontSize: 14,
