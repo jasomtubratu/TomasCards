@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   Platform,
   Alert,
+  Linking,
 } from 'react-native';
-import { Trash2, Coffee, Info, User, Moon, Sun, Monitor } from 'lucide-react-native';
+import { Trash2, Coffee, Info, User, Moon, Sun, Monitor, HelpCircle, HandPlatterIcon, HeartPulseIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { AppSettings, ThemeMode } from '@/utils/types';
 import { loadSettings, saveSettings, saveCards } from '@/utils/storage';
@@ -82,49 +83,7 @@ export default function SettingsScreen() {
     await saveSettings(newSettings);
   };
 
-  // Toggle between 'light' and 'dark' immediately (no confirmation)
-  const handleThemeToggle = async (value: boolean) => {
-    if (Platform.OS !== 'web') {
-      await lightHaptic();
-    }
-    const newMode: ThemeMode = value ? 'dark' : 'light';
-    setThemeMode(newMode);
-    await updateSettings({ ...settings, themeMode: newMode });
-  };
 
-  // Confirm deletion of all cards
-  const confirmDeleteAllCards = async () => {
-    await lightHaptic();
-    if (Platform.OS === 'web') {
-      if (confirm(t('settings.deleteAll.confirm'))) {
-        await deleteAllCards();
-      }
-      return;
-    }
-    Alert.alert(
-      t('settings.deleteAll.title'),
-      t('settings.deleteAll.confirm'),
-      [
-        {
-          text: t('common.buttons.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.buttons.delete'),
-          style: 'destructive',
-          onPress: deleteAllCards,
-        },
-      ]
-    );
-  };
-
-  // Actually delete every card
-  const deleteAllCards = async () => {
-    await saveCards([]);
-    await lightHaptic();
-  };
-
-  const isDarkMode = settings.themeMode === 'dark';
 
   return (
     <ScrollView
@@ -203,6 +162,34 @@ export default function SettingsScreen() {
           {t('settings.sections.appearance')}
         </Text>
 
+        <TouchableOpacity
+          style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
+          onPress={() => {
+            const newValue = !settings.hapticFeedback;
+            updateSettings({ ...settings, hapticFeedback: newValue });
+            if (newValue) lightHaptic();
+          }}
+        >
+          <View style={styles.settingLeft}>
+            <HeartPulseIcon size={24} color={colors.textSecondary} />
+            <View style={styles.settingTextContainer}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.haptic.title')}
+              </Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                {t('settings.haptic.description')}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={settings.hapticFeedback}
+            onValueChange={(value) => {
+              updateSettings({ ...settings, hapticFeedback: value });
+              if (value) lightHaptic();
+            }}
+          />
+        </TouchableOpacity>
+
         {/* Language Selector */}
         <LanguageSelector />
 
@@ -210,45 +197,13 @@ export default function SettingsScreen() {
         <ThemeSelector />
       </View>
 
-      {/* Data Management Section */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          {t('settings.sections.data')}
-        </Text>
-        <TouchableOpacity
-          style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
-          onPress={confirmDeleteAllCards}
-        >
-          <View style={styles.settingLeft}>
-            <Trash2 size={24} color={colors.error} />
-            <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                {t('settings.deleteAll.title')}
-              </Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {t('settings.deleteAll.description')}
-              </Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </View>
+  
 
       {/* About Section */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
           {t('settings.sections.about')}
         </Text>
-
-        <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
-          <View style={styles.settingLeft}>
-            <Info size={24} color={colors.textSecondary} />
-            <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
-                {t('settings.version', { version: '1.0.0 ALPHA' })}
-              </Text>
-            </View>
-          </View>
-        </View>
 
         {/*
         <TouchableOpacity style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
@@ -265,6 +220,33 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
         */}
+        <TouchableOpacity
+          style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}
+          onPress={() => Linking.openURL('mailto:help@tomascards.fun')}
+        >
+          <View style={styles.settingLeft}>
+            <HelpCircle size={24} color={colors.textSecondary} />
+            <View style={styles.settingTextContainer}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.csupport.title')}
+              </Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                {t('settings.csupport.description')}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
+          <View style={styles.settingLeft}>
+            <Info size={24} color={colors.textSecondary} />
+            <View style={styles.settingTextContainer}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>
+                {t('settings.version', { version: '1.0.0 ALPHA' })}
+              </Text>
+            </View>
+          </View>
+        </View>
       </View>
     </ScrollView>
   );

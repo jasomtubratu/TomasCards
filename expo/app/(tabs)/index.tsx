@@ -13,11 +13,12 @@ import { ArrowUpDown, Plus } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { LoyaltyCard } from '@/utils/types';
-import { loadCards } from '@/utils/storage';
+import { loadCards, saveCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
 import LoyaltyCardComponent from '@/components/LoyaltyCard';
 import Header from '@/components/Header';
 import EmptyState from '@/components/EmptyState';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type SortType = 'name' | 'date' | 'lastUsed';
 
@@ -30,6 +31,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [sortType, setSortType] = useState<SortType>('name');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [internetStatus, setInternetStatus] = useState<'online' | 'offline'>('offline');
 
   const loadCardData = useCallback(async () => {
     try {
@@ -42,19 +44,47 @@ export default function HomeScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadCardData();
-  }, [loadCardData]);
-
-  useFocusEffect(
-    useCallback(() => {
+  const fetchData = async () => {
+    setInternetStatus("offline")
+    const loggedIn = await AsyncStorage.getItem("authToken");
+    if (!loggedIn) {
       loadCardData();
-    }, [loadCardData])
-  );
+    } else {
+      try {
+        const response = await fetch('http://localhost:3000/cards', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${loggedIn}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        setInternetStatus('online');
+        const data = await response.json();
+        setCards(data);
+        saveCards(data);
+      } catch (error) {
+        console.error('Error fetching cards from server:', error);
+        setInternetStatus('offline');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    console.log('Internet status:', internetStatus);
+  }, [internetStatus]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadCardData();
+    await fetchData();
     setRefreshing(false);
   };
 
@@ -173,12 +203,14 @@ export default function HomeScreen() {
             >
               <ArrowUpDown size={24} color={colors.textPrimary} />
             </TouchableOpacity>
+            {internetStatus !== 'offline' &&
             <TouchableOpacity 
               style={[styles.headerButton, { backgroundColor: colors.backgroundMedium }]}
               onPress={() => router.push('/add')}
             >
               <Plus size={24} color={colors.textPrimary} />
             </TouchableOpacity>
+            }
           </View>
         }
       />

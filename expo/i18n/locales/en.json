@@ -85,10 +85,13 @@
       "systemDescription": "Follow system appearance",
       "confirmChange": "Changing the theme requires a restart to apply properly. Do you want to continue?"
     },
-    "deleteAll": {
-      "title": "Delete All Cards",
-      "description": "Permanently remove all loyalty cards",
-      "confirm": "Are you sure you want to delete all cards?"
+    "csupport": {
+      "title": "Support",
+      "contact": "Contact Support",
+      "description": "If you have any questions or need help, please contact us at help@tomascards.fun.",
+      "faq": "FAQ",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service"
     },
     "version": "Version {{version}}"
   }

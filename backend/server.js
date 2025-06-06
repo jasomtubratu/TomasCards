@@ -21,7 +21,17 @@ if (!JWT_SECRET || !JWT_SECRET2 || !MONGO_URI) {
   process.exit(1);
 }
 
-mongoose.connect(MONGO_URI);
+const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log("✅ Connected to MongoDB");
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error);
+    process.exit(1);
+  }
+};
+
+connectDB();
 
 const User = mongoose.model("User", new mongoose.Schema({
   id: mongoose.Schema.Types.ObjectId,
@@ -194,6 +204,11 @@ app.put("/cards/:id", authMiddleware, async (req, res) => {
 });
 
 app.get("/cards", authMiddleware, async (req, res) => {
+  console.log("Fetching cards for user:", req.userId);
+  if (!req.userId) return res.sendStatus(401);
+  // Fetch all loyalty cards for the authenticated user
+  console.log("User ID:", req.userId);
+  console.log("Fetching cards for user:", req.userId);  
   const cards = await LoyaltyCard.find({ userId: req.userId });
   res.json(cards);
 });

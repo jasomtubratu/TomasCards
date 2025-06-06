@@ -1,0 +1,6 @@
+on first open app screen to login welcome etc..
+
+save cards and sync with API
+forgot pass/register 
+
+translations
