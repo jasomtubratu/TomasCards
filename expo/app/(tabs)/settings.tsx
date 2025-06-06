@@ -21,6 +21,9 @@ import ThemeSelector from '@/components/ThemeSelector';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -51,10 +54,10 @@ export default function SettingsScreen() {
   async function fetchUserData() {
     setLoadingStatus(true);
     const token = await AsyncStorage.getItem('authToken') || '';
-    const response = await fetch('http://localhost:3000/me', {
+    const response = await fetch(`${API_URL}/me`, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
       },
       method: 'GET',
     });
@@ -91,6 +94,9 @@ export default function SettingsScreen() {
       contentContainerStyle={styles.content}
     >
       {/* Account Section */}
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            {t('settings.sections.account')}
+          </Text>
       {isLoggedIn ? (
         <TouchableOpacity
           style={styles.section}
@@ -108,6 +114,7 @@ export default function SettingsScreen() {
                   style: 'destructive',
                   onPress: async () => {
                     await AsyncStorage.removeItem('authToken');
+                    router.push('/auth/login');
                     setIsLoggedIn(false);
                   },
                 },
@@ -115,9 +122,6 @@ export default function SettingsScreen() {
             )
           }
         >
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('settings.sections.account')}
-          </Text>
           <View style={[styles.settingRow, { backgroundColor: colors.backgroundMedium }]}>
             <View style={styles.settingLeft}>
               <User size={24} color={colors.textSecondary} />

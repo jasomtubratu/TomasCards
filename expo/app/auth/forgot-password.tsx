@@ -16,6 +16,8 @@ import { Mail, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { lightHaptic } from '@/utils/feedback';
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -35,7 +37,7 @@ export default function ForgotPasswordScreen() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3000/forgot-password', {
+      const response = await fetch(`${API_URL}/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

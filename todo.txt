@@ -1,4 +1,4 @@
-on first open app screen to login welcome etc..
+on first open app screen to login welcome etc.. you need to login to create a card
 
 save cards and sync with API
 forgot pass/register 
@@ -7,5 +7,3 @@ translations
 
 more cards
 support domain
-
-fix add button phones on web it works for some reason

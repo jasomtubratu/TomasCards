@@ -18,6 +18,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { lightHaptic } from '@/utils/feedback';
 import Header from '@/components/Header';
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 export default function LoginScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -38,7 +40,7 @@ export default function LoginScreen() {
     setError('');
   
     try {
-      const response = await fetch('http://localhost:3000/login', {
+      const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

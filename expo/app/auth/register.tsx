@@ -16,6 +16,9 @@ import { Mail, Lock, Eye, EyeOff, User, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { lightHaptic } from '@/utils/feedback';
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+
 export default function RegisterScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -64,7 +67,7 @@ export default function RegisterScreen() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3000/register', {
+      const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -22,6 +22,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type SortType = 'name' | 'date' | 'lastUsed';
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -45,13 +47,15 @@ export default function HomeScreen() {
   }, []);
 
   const fetchData = async () => {
-    setInternetStatus("offline")
+    setLoading(true);
     const loggedIn = await AsyncStorage.getItem("authToken");
     if (!loggedIn) {
-      loadCardData();
+      setLoading(false);
+      router.push('/auth/login');
+      return;
     } else {
       try {
-        const response = await fetch('http://localhost:3000/cards', {
+        const response = await fetch(`${API_URL}/cards`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -59,7 +63,8 @@ export default function HomeScreen() {
           },
         });
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          loadCardData();
+          setInternetStatus('offline');
         }
         setInternetStatus('online');
         const data = await response.json();
@@ -67,6 +72,7 @@ export default function HomeScreen() {
         saveCards(data);
       } catch (error) {
         console.error('Error fetching cards from server:', error);
+        loadCardData();
         setInternetStatus('offline');
       } finally {
         setLoading(false);

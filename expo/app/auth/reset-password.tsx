@@ -16,6 +16,9 @@ import { Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { lightHaptic } from '@/utils/feedback';
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+
 export default function ResetPasswordScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -65,7 +68,7 @@ export default function ResetPasswordScreen() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3000/reset-password', {
+      const response = await fetch(`${API_URL}/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
