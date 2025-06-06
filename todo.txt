@@ -4,3 +4,8 @@ save cards and sync with API
 forgot pass/register 
 
 translations
+
+more cards
+support domain
+
+fix add button phones on web it works for some reason
