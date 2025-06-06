@@ -27,10 +27,7 @@ export default function RootLayout() {
         await loadSettings();
 
         setLoadingMessage('Logging in...');
-        if (!isLoggedIn) {
-          router.push("/auth/login");
-          return;
-        } else {
+        if (isLoggedIn) {
           const token = await AsyncStorage.getItem('authToken');
           const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/me`, {
             headers: {
@@ -41,10 +38,8 @@ export default function RootLayout() {
           });
           if (response.status === 404) {
             await AsyncStorage.removeItem('authToken');
-            router.push("/auth/login");
             return;
           } else if (response.status !== 200) {
-            console.warn('Failed to fetch user data, using local storage instead.');
             await loadCards();
             router.push("/");
           } else {
