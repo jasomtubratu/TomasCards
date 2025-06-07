@@ -8,7 +8,8 @@
       "close": "Close",
       "back": "Back",
       "confirm": "Confirm",
-      "logout": "Logout"
+      "logout": "Logout",
+      "ok": "OK"
     },
     "labels": {
       "name": "Name",
@@ -154,5 +155,60 @@
       "termsOfService": "Terms of Service"
     },
     "version": "Version {{version}}"
+  },
+  "storage": {
+    "mode": {
+      "title": "Storage Mode",
+      "subtitle": "Choose how your cards are stored and synchronized",
+      "local": {
+        "title": "Local Storage",
+        "description": "Store cards only on this device",
+        "feature1": "Works offline",
+        "feature2": "Complete privacy",
+        "limitation": "No sync across devices"
+      },
+      "cloud": {
+        "title": "Cloud Storage",
+        "description": "Store cards in the cloud with sync",
+        "feature1": "Sync across devices",
+        "feature2": "Automatic backup",
+        "limitation": "Requires internet connection"
+      }
+    },
+    "offline": {
+      "title": "Internet Required",
+      "message": "Cloud storage features require an internet connection. Please connect to the internet or switch to local storage mode.",
+      "banner": "Internet connection required for cloud features"
+    },
+    "cloud": {
+      "loginRequired": "Login Required",
+      "loginRequiredMessage": "You need to sign in to use cloud storage. Would you like to sign in now?"
+    }
+  },
+  "sync": {
+    "status": {
+      "synced": "Synced",
+      "syncing": "Syncing...",
+      "offline": "Offline",
+      "error": "Sync Error",
+      "pending": "{{count}} pending",
+      "tapToRetry": "Tap to retry"
+    },
+    "conflict": {
+      "title": "Sync Conflict",
+      "subtitle": "We found different data on your device and in the cloud. How would you like to resolve this?",
+      "localData": "Local Data",
+      "cloudData": "Cloud Data",
+      "cardCount": "{{count}} cards",
+      "replaceWithCloud": "Use Cloud Data",
+      "replaceWithCloudDesc": "Replace local cards with cloud data",
+      "merge": "Merge Data",
+      "mergeDesc": "Combine local and cloud cards",
+      "keepLocal": "Use Local Data",
+      "keepLocalDesc": "Upload local cards to cloud",
+      "resolving": "Resolving conflict...",
+      "error": "Sync Error",
+      "errorMessage": "Failed to resolve sync conflict. Please try again."
+    }
   }
 }

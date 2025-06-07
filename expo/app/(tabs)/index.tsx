@@ -7,25 +7,26 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ArrowUpDown, Plus } from 'lucide-react-native';
+import { ArrowUpDown, Plus, WifiOff, Settings } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { LoyaltyCard } from '@/utils/types';
-import { loadCards, saveCards } from '@/utils/storage';
 import { useTheme } from '@/hooks/useTheme';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useAuth } from '@/hooks/useAuth';
+import { storageManager, SyncConflictData } from '@/utils/storageManager';
 import LoyaltyCardComponent from '@/components/LoyaltyCard';
 import Header from '@/components/Header';
 import EmptyState from '@/components/EmptyState';
 import OfflineBanner from '@/components/OfflineBanner';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import SyncStatusIndicator, { SyncStatus } from '@/components/SyncStatusIndicator';
+import SyncConflictModal from '@/components/SyncConflictModal';
+import StorageModeSelector from '@/components/StorageModeSelector';
 
 type SortType = 'name' | 'date' | 'lastUsed';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -38,81 +39,136 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [sortType, setSortType] = useState<SortType>('name');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('offline');
+  const [pendingOperations, setPendingOperations] = useState(0);
+  const [syncConflictData, setSyncConflictData] = useState<SyncConflictData | null>(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [showStorageSelector, setShowStorageSelector] = useState(false);
+  const [storageMode, setStorageMode] = useState<'local' | 'cloud'>('local');
+  const [conflictResolving, setConflictResolving] = useState(false);
+
+  // Initialize storage manager
+  useEffect(() => {
+    const initializeStorage = async () => {
+      await storageManager.initialize();
+      setStorageMode(storageManager.getStorageMode());
+      
+      // Check for sync conflicts when user logs in
+      if (isAuthenticated && isOnline && storageManager.getStorageMode() === 'cloud') {
+        const conflicts = await storageManager.checkForSyncConflicts();
+        if (conflicts) {
+          setSyncConflictData(conflicts);
+          setShowConflictModal(true);
+        }
+      }
+    };
+    
+    initializeStorage();
+  }, [isAuthenticated, isOnline]);
+
+  // Update sync status based on network and auth state
+  useEffect(() => {
+    if (!isOnline) {
+      setSyncStatus('offline');
+    } else if (storageMode === 'local') {
+      setSyncStatus('synced');
+    } else if (!isAuthenticated) {
+      setSyncStatus('offline');
+    } else {
+      setSyncStatus('synced');
+    }
+    
+    setPendingOperations(storageManager.getQueuedOperationsCount());
+  }, [isOnline, isAuthenticated, storageMode]);
 
   const loadCardData = useCallback(async () => {
     try {
-      const data = await loadCards();
+      setSyncStatus('syncing');
+      const data = await storageManager.loadCards();
       setCards(data);
+      
+      // Process queued operations if online
+      if (isOnline && isAuthenticated && storageMode === 'cloud') {
+        await storageManager.processQueuedOperations();
+        setPendingOperations(storageManager.getQueuedOperationsCount());
+      }
+      
+      setSyncStatus(isOnline && storageMode === 'cloud' ? 'synced' : 'offline');
     } catch (e) {
       console.error('Error loading cards', e);
+      setSyncStatus('error');
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  const fetchData = async () => {
-    if (!isAuthenticated) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    const token = await AsyncStorage.getItem("authToken");
-    
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    if (isOnline) {
-      try {
-        const response = await fetch(`${API_URL}/cards`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setCards(data);
-          await saveCards(data);
-        } else {
-          // Server error, fall back to local data
-          await loadCardData();
-        }
-      } catch (error) {
-        console.error('Error fetching cards from server:', error);
-        // Network error, fall back to local data
-        await loadCardData();
-      }
-    } else {
-      // Offline mode, load from local storage
-      await loadCardData();
-    }
-    
-    setLoading(false);
-  };
+  }, [isOnline, isAuthenticated, storageMode]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchData();
-    }
-  }, [isOnline, isAuthenticated]);
+    loadCardData();
+  }, [loadCardData]);
 
   useFocusEffect(
     useCallback(() => {
-      if (isAuthenticated && !isOnline) {
-        loadCardData();
-      }
-    }, [isOnline, loadCardData, isAuthenticated])
+      loadCardData();
+    }, [loadCardData])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await loadCardData();
     setRefreshing(false);
+  };
+
+  const handleAddCard = () => {
+    if (storageMode === 'cloud' && !isOnline) {
+      Alert.alert(
+        t('storage.offline.title'),
+        t('storage.offline.message'),
+        [{ text: t('common.buttons.ok') }]
+      );
+      return;
+    }
+    router.push('/add');
+  };
+
+  const handleStorageModeChange = async (mode: 'local' | 'cloud') => {
+    if (mode === 'cloud' && !isAuthenticated) {
+      Alert.alert(
+        t('storage.cloud.loginRequired'),
+        t('storage.cloud.loginRequiredMessage'),
+        [
+          { text: t('common.buttons.cancel') },
+          { text: t('auth.login.signIn'), onPress: () => router.push('/auth/login') },
+        ]
+      );
+      return;
+    }
+
+    await storageManager.setStorageMode(mode);
+    setStorageMode(mode);
+    setShowStorageSelector(false);
+    
+    // Reload cards with new storage mode
+    await loadCardData();
+  };
+
+  const handleSyncConflictResolve = async (action: 'replace_with_cloud' | 'merge' | 'keep_local') => {
+    if (!syncConflictData) return;
+    
+    setConflictResolving(true);
+    try {
+      await storageManager.resolveSyncConflict(action, syncConflictData);
+      setShowConflictModal(false);
+      setSyncConflictData(null);
+      await loadCardData();
+    } catch (error) {
+      console.error('Failed to resolve sync conflict:', error);
+      Alert.alert(
+        t('sync.conflict.error'),
+        t('sync.conflict.errorMessage')
+      );
+    } finally {
+      setConflictResolving(false);
+    }
   };
 
   const sortCards = (cards: LoyaltyCard[]) => {
@@ -219,24 +275,50 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundDark }]}>
-      <OfflineBanner />
+      {!isOnline && storageMode === 'cloud' && (
+        <View style={[styles.offlineBanner, { backgroundColor: colors.warning }]}>
+          <WifiOff size={16} color={colors.textPrimary} />
+          <Text style={[styles.offlineText, { color: colors.textPrimary }]}>
+            {t('storage.offline.banner')}
+          </Text>
+        </View>
+      )}
       
       <Header 
         title={t('cards.title')}
         showBack={false}
         rightElement={
           <View style={styles.headerButtons}>
+            <SyncStatusIndicator
+              status={syncStatus}
+              pendingCount={pendingOperations}
+              onRetry={loadCardData}
+              compact
+            />
+            <TouchableOpacity 
+              style={[styles.headerButton, { backgroundColor: colors.backgroundMedium }]}
+              onPress={() => setShowStorageSelector(true)}
+            >
+              <Settings size={20} color={colors.textPrimary} />
+            </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.headerButton, { backgroundColor: colors.backgroundMedium }]}
               onPress={() => setShowSortMenu(!showSortMenu)}
             >
-              <ArrowUpDown size={24} color={colors.textPrimary} />
+              <ArrowUpDown size={20} color={colors.textPrimary} />
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.headerButton, { backgroundColor: colors.backgroundMedium }]}
-              onPress={() => router.push('/add')}
+              style={[
+                styles.headerButton, 
+                { backgroundColor: colors.backgroundMedium },
+                (storageMode === 'cloud' && !isOnline) && styles.disabledButton
+              ]}
+              onPress={handleAddCard}
+              disabled={storageMode === 'cloud' && !isOnline}
             >
-              <Plus size={24} color={colors.textPrimary} />
+              <Plus size={20} color={
+                (storageMode === 'cloud' && !isOnline) ? colors.textHint : colors.textPrimary
+              } />
             </TouchableOpacity>
           </View>
         }
@@ -272,6 +354,20 @@ export default function HomeScreen() {
           }
         />
       )}
+
+      <SyncConflictModal
+        visible={showConflictModal}
+        conflictData={syncConflictData}
+        onResolve={handleSyncConflictResolve}
+        loading={conflictResolving}
+      />
+
+      <StorageModeSelector
+        visible={showStorageSelector}
+        currentMode={storageMode}
+        onSelect={handleStorageModeChange}
+        onClose={() => setShowStorageSelector(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -284,6 +380,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  offlineText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   list: {
     padding: 8,
@@ -305,6 +413,9 @@ const styles = StyleSheet.create({
   headerButton: {
     padding: 8,
     borderRadius: 8,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   sortMenu: {
     position: 'absolute',

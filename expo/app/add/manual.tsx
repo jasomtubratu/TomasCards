@@ -9,21 +9,24 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { Save } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { addCard } from '@/utils/storage';
 import type { LoyaltyCard } from '@/utils/types';
 import { POPULAR_CARDS } from '@/assets/cards';
 import Header from '@/components/Header';
 import { useTheme } from '@/hooks/useTheme';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { lightHaptic } from '@/utils/feedback';
+import { storageManager } from '@/utils/storageManager';
 
 export default function ManualEntryScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
+  const { isOnline } = useNetworkStatus();
   const { store } = useLocalSearchParams<{ store?: string }>();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -36,6 +39,17 @@ export default function ManualEntryScreen() {
   const handleSave = async () => {
     if (!code.trim()) {
       setError(t('common.validation.required'));
+      return;
+    }
+
+    // Check if cloud storage is selected but offline
+    const storageMode = storageManager.getStorageMode();
+    if (storageMode === 'cloud' && !isOnline) {
+      Alert.alert(
+        t('storage.offline.title'),
+        t('storage.offline.message'),
+        [{ text: t('common.buttons.ok') }]
+      );
       return;
     }
 
@@ -52,7 +66,8 @@ export default function ManualEntryScreen() {
         color,
         dateAdded: Date.now(),
       };
-      await addCard(newCard);
+      
+      await storageManager.saveCard(newCard, isOnline);
       router.replace(`/card/${newCard.id}`);
     } catch (err) {
       setError(t('common.validation.invalid'));

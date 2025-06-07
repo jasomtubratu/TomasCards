@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoyaltyCard, AppSettings } from './types';
+import { storageManager } from './storageManager';
 
 // Storage keys
-const CARDS_STORAGE_KEY = 'loyalty_cards';
 const SETTINGS_STORAGE_KEY = 'app_settings';
 
 // Default settings
@@ -13,75 +13,38 @@ const DEFAULT_SETTINGS: AppSettings = {
   themeMode: 'system',
 };
 
-// Load all cards
+// Legacy functions for backward compatibility - now use StorageManager
 export async function loadCards(): Promise<LoyaltyCard[]> {
-  try {
-    const jsonValue = await AsyncStorage.getItem(CARDS_STORAGE_KEY);
-    return jsonValue != null ? JSON.parse(jsonValue) : [];
-  } catch (e) {
-    console.error('Failed to load cards from storage', e);
-    return [];
-  }
+  return await storageManager.loadCards();
 }
 
-// Save all cards
 export async function saveCards(cards: LoyaltyCard[]): Promise<void> {
-  try {
-    const jsonValue = JSON.stringify(cards);
-    await AsyncStorage.setItem(CARDS_STORAGE_KEY, jsonValue);
-  } catch (e) {
-    console.error('Failed to save cards to storage', e);
-  }
+  // This is now handled by the storage manager
+  await storageManager.saveLocalCards(cards);
 }
 
-// Add a new card
 export async function addCard(card: LoyaltyCard): Promise<void> {
-  try {
-    const cards = await loadCards();
-    cards.push(card);
-    await saveCards(cards);
-  } catch (e) {
-    console.error('Failed to add card', e);
-  }
+  // Check if online - this should be passed from the calling component
+  const isOnline = true; // Placeholder
+  await storageManager.saveCard(card, isOnline);
 }
 
-// Update a card
 export async function updateCard(updatedCard: LoyaltyCard): Promise<void> {
-  try {
-    const cards = await loadCards();
-    const index = cards.findIndex(card => card.id === updatedCard.id);
-    if (index !== -1) {
-      cards[index] = updatedCard;
-      await saveCards(cards);
-    }
-  } catch (e) {
-    console.error('Failed to update card', e);
-  }
+  const isOnline = true; // Placeholder
+  await storageManager.updateCard(updatedCard, isOnline);
 }
 
-// Delete a card
 export async function deleteCard(id: string): Promise<void> {
-  try {
-    const cards = await loadCards();
-    const filteredCards = cards.filter(card => card.id !== id);
-    await saveCards(filteredCards);
-  } catch (e) {
-    console.error('Failed to delete card', e);
-  }
+  const isOnline = true; // Placeholder
+  await storageManager.deleteCard(id, isOnline);
 }
 
-// Get a single card by ID
 export async function getCard(id: string): Promise<LoyaltyCard | null> {
-  try {
-    const cards = await loadCards();
-    return cards.find(card => card.id === id) || null;
-  } catch (e) {
-    console.error('Failed to get card', e);
-    return null;
-  }
+  const cards = await storageManager.loadCards();
+  return cards.find(card => card.id === id) || null;
 }
 
-// Load app settings
+// Settings functions remain unchanged
 export async function loadSettings(): Promise<AppSettings> {
   try {
     const jsonValue = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -94,7 +57,6 @@ export async function loadSettings(): Promise<AppSettings> {
   }
 }
 
-// Save app settings
 export async function saveSettings(settings: AppSettings): Promise<void> {
   try {
     const jsonValue = JSON.stringify(settings);

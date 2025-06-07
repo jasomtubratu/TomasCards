@@ -5,25 +5,45 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Alert,
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import CodeScanner from '@/components/CodeScanner';
-import { addCard } from '@/utils/storage';
+import { storageManager } from '@/utils/storageManager';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ScanScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
+  const { isOnline } = useNetworkStatus();
   const { store } = useLocalSearchParams<{ store?: string }>();
   const [scanned, setScanned] = useState(false);
 
   const handleCodeScanned = async (data: string, type: 'barcode' | 'qrcode') => {
     if (scanned) return;
     setScanned(true);
+
+    // Check if cloud storage is selected but offline
+    const storageMode = storageManager.getStorageMode();
+    if (storageMode === 'cloud' && !isOnline) {
+      Alert.alert(
+        t('storage.offline.title'),
+        t('storage.offline.message'),
+        [
+          { 
+            text: t('common.buttons.ok'),
+            onPress: () => setScanned(false)
+          }
+        ]
+      );
+      return;
+    }
+
     const newCard = {
       id: Date.now().toString(),
       name: store || 'Unknown Store',
@@ -33,8 +53,18 @@ export default function ScanScreen() {
       color: colors.accent,
       dateAdded: Date.now(),
     };
-    await addCard(newCard);
-    router.replace(`/card/${newCard.id}`);
+    
+    try {
+      await storageManager.saveCard(newCard, isOnline);
+      router.replace(`/card/${newCard.id}`);
+    } catch (error) {
+      console.error('Failed to save scanned card:', error);
+      setScanned(false);
+      Alert.alert(
+        t('common.labels.error'),
+        'Failed to save card. Please try again.'
+      );
+    }
   };
 
   const handleManual = () => {

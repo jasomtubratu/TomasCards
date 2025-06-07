@@ -19,8 +19,10 @@ import { useTranslation } from 'react-i18next';
 import QRCode from 'react-native-qrcode-svg';
 
 import { LoyaltyCard } from '@/utils/types';
-import { getCard, updateCard, deleteCard } from '@/utils/storage';
+import { getCard } from '@/utils/storage';
+import { storageManager } from '@/utils/storageManager';
 import { useTheme } from '@/hooks/useTheme';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import BarcodeRenderer from '@/components/BarcodeRenderer';
 import CardForm from '@/components/CardForm';
 import Header from '@/components/Header';
@@ -30,14 +32,15 @@ export default function CardDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
+  const { isOnline } = useNetworkStatus();
   const { id, edit } = useLocalSearchParams<{ id: string; edit?: string }>();
   const [card, setCard] = useState<LoyaltyCard | null>(null);
   const [isEditing, setIsEditing] = useState(edit === 'true');
   const [loading, setLoading] = useState(true);
 
-    const matchedCard = card ? POPULAR_CARDS.find(
-      (item) => item.id?.toLowerCase() === card.brand?.toLowerCase()
-    ) : undefined;
+  const matchedCard = card ? POPULAR_CARDS.find(
+    (item) => item.id?.toLowerCase() === card.brand?.toLowerCase()
+  ) : undefined;
 
   useEffect(() => {
     const loadCardData = async () => {
@@ -48,7 +51,7 @@ export default function CardDetailScreen() {
           setCard(cardData);
           if (!isEditing) {
             const updated = { ...cardData, lastUsed: Date.now() };
-            await updateCard(updated);
+            await storageManager.updateCard(updated, isOnline);
           }
         }
       } catch (e) {
@@ -58,26 +61,33 @@ export default function CardDetailScreen() {
       }
     };
     loadCardData();
-  }, [id, isEditing]);
+  }, [id, isEditing, isOnline]);
 
   const handleUpdateCard = async (updatedCard: LoyaltyCard) => {
-    await updateCard(updatedCard);
+    await storageManager.updateCard(updatedCard, isOnline);
     setCard(updatedCard);
     setIsEditing(false);
   };
 
   const handleDeleteCard = async () => {
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
       if (id) {
-        deleteCard(id).then(() => {
+        try {
+          await storageManager.deleteCard(id, isOnline);
           router.replace('/');
-        });
+        } catch (error) {
+          console.error('Failed to delete card:', error);
+          Alert.alert(
+            t('common.labels.error'),
+            'Failed to delete card. Please try again.'
+          );
+        }
       }
     };
 
     if (Platform.OS === 'web') {
       if (confirm(t('cardDetail.deleteConfirm'))) {
-        confirmDelete();
+        await confirmDelete();
       }
     } else {
       Alert.alert(
@@ -94,7 +104,7 @@ export default function CardDetailScreen() {
   const toggleFavorite = async () => {
     if (card) {
       const updatedCard = { ...card, isFavorite: !card.isFavorite };
-      await updateCard(updatedCard);
+      await storageManager.updateCard(updatedCard, isOnline);
       setCard(updatedCard);
     }
   };
@@ -125,10 +135,9 @@ export default function CardDetailScreen() {
     );
   }
 
-    const logoSource: ImageSourcePropType | null = matchedCard
-      ? (matchedCard.logo as ImageSourcePropType)
-      : null;
-  
+  const logoSource: ImageSourcePropType | null = matchedCard
+    ? (matchedCard.logo as ImageSourcePropType)
+    : null;
 
   return (
     <View style={[styles.mainContainer, { backgroundColor: colors.backgroundDark }]}>
@@ -150,15 +159,17 @@ export default function CardDetailScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.cardHeader}>
           <View style={[styles.logoPlaceholder, { backgroundColor: card.color }]}>
-          {logoSource ? (
-                    <Image
-                      source={logoSource}
-                      style={styles.logo}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Text style={[styles.logoPlaceholderText, { color: colors.textPrimary }]}>{card.name.charAt(0)}</Text>
-                  )}
+            {logoSource ? (
+              <Image
+                source={logoSource}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={[styles.logoPlaceholderText, { color: colors.textPrimary }]}>
+                {card.name.charAt(0)}
+              </Text>
+            )}
           </View>
           <Text style={[styles.cardName, { color: colors.textPrimary }]}>{card.name}</Text>
         </View>

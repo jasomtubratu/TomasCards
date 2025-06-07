@@ -8,7 +8,8 @@
       "close": "Zavrieť",
       "back": "Späť",
       "confirm": "Potvrdiť",
-      "logout": "Odhlásiť sa"
+      "logout": "Odhlásiť sa",
+      "ok": "OK"
     },
     "labels": {
       "name": "Názov",
@@ -159,5 +160,60 @@
       "termsOfService": "Podmienky služby"
     },
     "version": "Verzia {{version}}"
+  },
+  "storage": {
+    "mode": {
+      "title": "Režim úložiska",
+      "subtitle": "Vyberte si, ako sa vaše karty ukladajú a synchronizujú",
+      "local": {
+        "title": "Lokálne úložisko",
+        "description": "Ukladať karty len na tomto zariadení",
+        "feature1": "Funguje offline",
+        "feature2": "Úplné súkromie",
+        "limitation": "Bez synchronizácie medzi zariadeniami"
+      },
+      "cloud": {
+        "title": "Cloudové úložisko",
+        "description": "Ukladať karty v cloude so synchronizáciou",
+        "feature1": "Synchronizácia medzi zariadeniami",
+        "feature2": "Automatické zálohovanie",
+        "limitation": "Vyžaduje internetové pripojenie"
+      }
+    },
+    "offline": {
+      "title": "Vyžaduje sa internet",
+      "message": "Cloudové funkcie vyžadujú internetové pripojenie. Pripojte sa na internet alebo prepnite na lokálny režim úložiska.",
+      "banner": "Pre cloudové funkcie je potrebné internetové pripojenie"
+    },
+    "cloud": {
+      "loginRequired": "Vyžaduje sa prihlásenie",
+      "loginRequiredMessage": "Pre používanie cloudového úložiska sa musíte prihlásiť. Chcete sa prihlásiť teraz?"
+    }
+  },
+  "sync": {
+    "status": {
+      "synced": "Synchronizované",
+      "syncing": "Synchronizuje sa...",
+      "offline": "Offline",
+      "error": "Chyba synchronizácie",
+      "pending": "{{count}} čakajúcich",
+      "tapToRetry": "Klepnite pre opakovaný pokus"
+    },
+    "conflict": {
+      "title": "Konflikt synchronizácie",
+      "subtitle": "Našli sme rôzne údaje na vašom zariadení a v cloude. Ako chcete tento problém vyriešiť?",
+      "localData": "Lokálne údaje",
+      "cloudData": "Cloudové údaje",
+      "cardCount": "{{count}} kariet",
+      "replaceWithCloud": "Použiť cloudové údaje",
+      "replaceWithCloudDesc": "Nahradiť lokálne karty cloudovými údajmi",
+      "merge": "Spojiť údaje",
+      "mergeDesc": "Spojiť lokálne a cloudové karty",
+      "keepLocal": "Použiť lokálne údaje",
+      "keepLocalDesc": "Nahrať lokálne karty do cloudu",
+      "resolving": "Rieši sa konflikt...",
+      "error": "Chyba synchronizácie",
+      "errorMessage": "Nepodarilo sa vyriešiť konflikt synchronizácie. Skúste to znova."
+    }
   }
 }
