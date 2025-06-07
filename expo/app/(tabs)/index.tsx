@@ -18,6 +18,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useAuth } from '@/hooks/useAuth';
 import { storageManager, SyncConflictData } from '@/utils/storageManager';
+import { hasCompletedWelcome, markWelcomeCompleted } from '@/utils/storage';
 import LoyaltyCardComponent from '@/components/LoyaltyCard';
 import Header from '@/components/Header';
 import EmptyState from '@/components/EmptyState';
@@ -25,6 +26,7 @@ import OfflineBanner from '@/components/OfflineBanner';
 import SyncStatusIndicator, { SyncStatus } from '@/components/SyncStatusIndicator';
 import SyncConflictModal from '@/components/SyncConflictModal';
 import StorageModeSelector from '@/components/StorageModeSelector';
+import WelcomeScreen from '@/components/WelcomeScreen';
 
 type SortType = 'name' | 'date' | 'lastUsed';
 
@@ -46,6 +48,8 @@ export default function HomeScreen() {
   const [showStorageSelector, setShowStorageSelector] = useState(false);
   const [storageMode, setStorageMode] = useState<'local' | 'cloud'>('local');
   const [conflictResolving, setConflictResolving] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [welcomeCheckCompleted, setWelcomeCheckCompleted] = useState(false);
 
   // Initialize storage manager
   useEffect(() => {
@@ -65,6 +69,28 @@ export default function HomeScreen() {
     
     initializeStorage();
   }, [isAuthenticated, isOnline]);
+
+  // Check if welcome screen should be shown
+  useEffect(() => {
+    const checkWelcomeStatus = async () => {
+      if (!welcomeCheckCompleted) {
+        const completed = await hasCompletedWelcome();
+        if (!completed && !isAuthenticated) {
+          // Only show welcome if user hasn't completed it and isn't authenticated
+          const currentCards = await storageManager.loadCards();
+          if (currentCards.length === 0) {
+            setShowWelcome(true);
+          } else {
+            // User has cards but hasn't marked welcome as completed (edge case)
+            await markWelcomeCompleted();
+          }
+        }
+        setWelcomeCheckCompleted(true);
+      }
+    };
+
+    checkWelcomeStatus();
+  }, [isAuthenticated, welcomeCheckCompleted]);
 
   // Update sync status based on network and auth state
   useEffect(() => {
@@ -103,13 +129,17 @@ export default function HomeScreen() {
   }, [isOnline, isAuthenticated, storageMode]);
 
   useEffect(() => {
-    loadCardData();
-  }, [loadCardData]);
+    if (welcomeCheckCompleted && !showWelcome) {
+      loadCardData();
+    }
+  }, [loadCardData, welcomeCheckCompleted, showWelcome]);
 
   useFocusEffect(
     useCallback(() => {
-      loadCardData();
-    }, [loadCardData])
+      if (welcomeCheckCompleted && !showWelcome) {
+        loadCardData();
+      }
+    }, [loadCardData, welcomeCheckCompleted, showWelcome])
   );
 
   const onRefresh = async () => {
@@ -162,6 +192,19 @@ export default function HomeScreen() {
     } finally {
       setConflictResolving(false);
     }
+  };
+
+  const handleWelcomeComplete = async (selectedMode?: 'local' | 'cloud') => {
+    await markWelcomeCompleted();
+    setShowWelcome(false);
+    
+    if (selectedMode) {
+      await storageManager.setStorageMode(selectedMode);
+      setStorageMode(selectedMode);
+    }
+    
+    // Load cards after welcome is completed
+    await loadCardData();
   };
 
   const sortCards = (cards: LoyaltyCard[]) => {
@@ -258,7 +301,12 @@ export default function HomeScreen() {
     );
   };
 
-  if (loading) {
+  // Show welcome screen if needed
+  if (showWelcome) {
+    return <WelcomeScreen onComplete={handleWelcomeComplete} />;
+  }
+
+  if (loading || !welcomeCheckCompleted) {
     return (
       <View style={[styles.center, { backgroundColor: colors.backgroundDark }]}>
         <ActivityIndicator size="large" color={colors.accent} />

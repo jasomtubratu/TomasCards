@@ -4,6 +4,7 @@ import { storageManager } from './storageManager';
 
 // Storage keys
 const SETTINGS_STORAGE_KEY = 'app_settings';
+const WELCOME_COMPLETED_KEY = 'welcome_completed';
 
 // Default settings
 const DEFAULT_SETTINGS: AppSettings = {
@@ -12,6 +13,25 @@ const DEFAULT_SETTINGS: AppSettings = {
   secureWithBiometrics: false,
   themeMode: 'system',
 };
+
+// Welcome setup tracking
+export async function hasCompletedWelcome(): Promise<boolean> {
+  try {
+    const completed = await AsyncStorage.getItem(WELCOME_COMPLETED_KEY);
+    return completed === 'true';
+  } catch (error) {
+    console.error('Failed to check welcome completion status:', error);
+    return false;
+  }
+}
+
+export async function markWelcomeCompleted(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(WELCOME_COMPLETED_KEY, 'true');
+  } catch (error) {
+    console.error('Failed to mark welcome as completed:', error);
+  }
+}
 
 // Legacy functions for backward compatibility - now use StorageManager
 export async function loadCards(): Promise<LoyaltyCard[]> {

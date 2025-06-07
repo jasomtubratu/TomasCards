@@ -28,6 +28,34 @@
       "banner": "Offline režim aktívny - Používajú sa lokálne údaje"
     }
   },
+  "welcome": {
+    "title": "Vitajte v TomasCards",
+    "subtitle": "Vaša digitálna peňaženka vernostných kariet. Vyberte si, ako chcete ukladať svoje karty.",
+    "recommended": "Odporúčané",
+    "cloudOption": {
+      "title": "Cloudové úložisko",
+      "description": "Prihláste sa pre synchronizáciu kariet medzi všetkými zariadeniami s automatickým zálohovaním.",
+      "feature1": "Synchronizácia medzi zariadeniami",
+      "feature2": "Automatické zálohovanie",
+      "feature3": "Bezpečné cloudové úložisko",
+      "action": "Prihlásiť sa alebo vytvoriť účet"
+    },
+    "localOption": {
+      "title": "Lokálne úložisko",
+      "description": "Ukladajte karty len na tomto zariadení pre úplné súkromie.",
+      "feature1": "Úplné súkromie",
+      "feature2": "Funguje offline",
+      "limitation": "Bez synchronizácie medzi zariadeniami",
+      "action": "Pokračovať bez účtu"
+    },
+    "localWarning": {
+      "title": "Len lokálne úložisko",
+      "message": "Vaše karty budú uložené len na tomto zariadení a nebudú sa synchronizovať s inými zariadeniami. Neskôr môžete prepnúť na cloudové úložisko v nastaveniach.",
+      "continue": "Pokračovať"
+    },
+    "note": "Nastavenie úložiska môžete kedykoľvek zmeniť v nastaveniach.",
+    "settingUp": "Nastavuje sa úložisko..."
+  },
   "auth": {
     "login": {
       "welcome": "Vitajte späť",
@@ -81,7 +109,7 @@
   },
   "cards": {
     "title": "Zbierka kariet",
-    "empty": "Zatiaľ nemáte žiadne vernostné karty. Klepnite na kartu Pridať a pridajte svoju prvú kartu.",
+    "empty": "Zatiaľ nemáte žiadne vernostné karty. Klepnite na tlačidlo \"+\" a pridajte svoju prvú kartu.",
     "sections": {
       "favorites": "Obľúbené",
       "other": "Ostatné karty",

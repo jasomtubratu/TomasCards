@@ -28,6 +28,34 @@
       "banner": "Offline Mode Active - Using local data"
     }
   },
+  "welcome": {
+    "title": "Welcome to TomasCards",
+    "subtitle": "Your digital loyalty card wallet. Choose how you'd like to store your cards.",
+    "recommended": "Recommended",
+    "cloudOption": {
+      "title": "Cloud Storage",
+      "description": "Sign in to sync your cards across all your devices with automatic backup.",
+      "feature1": "Sync across devices",
+      "feature2": "Automatic backup",
+      "feature3": "Secure cloud storage",
+      "action": "Sign In or Create Account"
+    },
+    "localOption": {
+      "title": "Local Storage",
+      "description": "Store your cards only on this device for complete privacy.",
+      "feature1": "Complete privacy",
+      "feature2": "Works offline",
+      "limitation": "No sync across devices",
+      "action": "Continue Without Account"
+    },
+    "localWarning": {
+      "title": "Local Storage Only",
+      "message": "Your cards will only be stored on this device and won't sync to other devices. You can always switch to cloud storage later in settings.",
+      "continue": "Continue"
+    },
+    "note": "You can change your storage preference anytime in the settings.",
+    "settingUp": "Setting up your storage..."
+  },
   "auth": {
     "login": {
       "welcome": "Welcome Back",
@@ -81,7 +109,7 @@
   },
   "cards": {
     "title": "Card Collection",
-    "empty": "No loyalty cards yet. Tap the \"Add\" tab to add your first card.",
+    "empty": "No loyalty cards yet. Tap the \"+\" button to add your first card.",
     "sections": {
       "favorites": "Favorites",
       "other": "Other Cards",

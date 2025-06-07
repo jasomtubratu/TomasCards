@@ -19,10 +19,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     if (!isLoading) {
       const inAuthGroup = segments[0] === 'auth';
       
-      if (!isAuthenticated && !inAuthGroup) {
-        // Redirect to login if not authenticated and not in auth group
-        router.replace('/auth/login');
-      } else if (isAuthenticated && inAuthGroup) {
+      // Only redirect to login if user is trying to access auth-required features
+      // The app now supports usage without authentication
+      if (isAuthenticated && inAuthGroup) {
         // Redirect to main app if authenticated and in auth group
         router.replace('/');
       }
