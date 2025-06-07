@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Alert,
+  Platform,
 } from 'react-native';
-import { Cloud, Smartphone, Check } from 'lucide-react-native';
+import { Cloud, Smartphone, Check, AlertTriangle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import { StorageMode } from '@/utils/storageManager';
@@ -32,8 +34,40 @@ export default function StorageModeSelector({
   const [selectedMode, setSelectedMode] = useState<StorageMode>(currentMode);
 
   const handleSelect = async (mode: StorageMode) => {
-    setSelectedMode(mode);
-    await onSelect(mode);
+    // Show warning when switching from local to cloud
+    if (currentMode === 'local' && mode === 'cloud') {
+      if (Platform.OS === 'web') {
+        const confirmed = window.confirm(
+          `${t('storage.mode.warning.title')}\n\n${t('storage.mode.warning.message')}`
+        );
+        if (confirmed) {
+          setSelectedMode(mode);
+          await onSelect(mode);
+        }
+      } else {
+        Alert.alert(
+          t('storage.mode.warning.title'),
+          t('storage.mode.warning.message'),
+          [
+        {
+          text: t('common.buttons.cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('storage.mode.warning.confirm'),
+          style: 'destructive',
+          onPress: async () => {
+            setSelectedMode(mode);
+            await onSelect(mode);
+          },
+        },
+          ]
+        );
+      }
+    } else {
+      setSelectedMode(mode);
+      await onSelect(mode);
+    }
   };
 
   return (
@@ -53,6 +87,47 @@ export default function StorageModeSelector({
           </Text>
 
           <View style={styles.options}>
+            <TouchableOpacity
+              style={[
+                styles.option,
+                { backgroundColor: colors.backgroundMedium },
+                selectedMode === 'cloud' && { borderColor: colors.accent, borderWidth: 2 },
+              ]}
+              onPress={() => handleSelect('cloud')}
+              disabled={loading}
+            >
+              <View style={styles.optionHeader}>
+                <Cloud size={24} color={colors.textPrimary} />
+                <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>
+                  {t('storage.mode.cloud.title')}
+                </Text>
+                <View style={styles.badges}>
+                  <View style={[styles.recommendedBadge, { backgroundColor: colors.accent }]}>
+                    <Text style={[styles.recommendedText, { color: colors.textPrimary }]}>
+                      {t('storage.mode.recommended')}
+                    </Text>
+                  </View>
+                  {selectedMode === 'cloud' && (
+                    <Check size={20} color={colors.accent} />
+                  )}
+                </View>
+              </View>
+              <Text style={[styles.optionDescription, { color: colors.textSecondary }]}>
+                {t('storage.mode.cloud.description')}
+              </Text>
+              <View style={styles.features}>
+                <Text style={[styles.feature, { color: colors.success }]}>
+                  ✓ {t('storage.mode.cloud.feature1')}
+                </Text>
+                <Text style={[styles.feature, { color: colors.success }]}>
+                  ✓ {t('storage.mode.cloud.feature2')}
+                </Text>
+                <Text style={[styles.feature, { color: colors.success }]}>
+                  ✓ {t('storage.mode.cloud.feature3')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={[
                 styles.option,
@@ -83,40 +158,6 @@ export default function StorageModeSelector({
                 </Text>
                 <Text style={[styles.feature, { color: colors.warning }]}>
                   ⚠ {t('storage.mode.local.limitation')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.option,
-                { backgroundColor: colors.backgroundMedium },
-                selectedMode === 'cloud' && { borderColor: colors.accent, borderWidth: 2 },
-              ]}
-              onPress={() => handleSelect('cloud')}
-              disabled={loading}
-            >
-              <View style={styles.optionHeader}>
-                <Cloud size={24} color={colors.textPrimary} />
-                <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>
-                  {t('storage.mode.cloud.title')}
-                </Text>
-                {selectedMode === 'cloud' && (
-                  <Check size={20} color={colors.accent} />
-                )}
-              </View>
-              <Text style={[styles.optionDescription, { color: colors.textSecondary }]}>
-                {t('storage.mode.cloud.description')}
-              </Text>
-              <View style={styles.features}>
-                <Text style={[styles.feature, { color: colors.success }]}>
-                  ✓ {t('storage.mode.cloud.feature1')}
-                </Text>
-                <Text style={[styles.feature, { color: colors.success }]}>
-                  ✓ {t('storage.mode.cloud.feature2')}
-                </Text>
-                <Text style={[styles.feature, { color: colors.warning }]}>
-                  ⚠ {t('storage.mode.cloud.limitation')}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -186,6 +227,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 12,
     flex: 1,
+  },
+  badges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recommendedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  recommendedText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   optionDescription: {
     fontSize: 14,

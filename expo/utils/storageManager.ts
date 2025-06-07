@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoyaltyCard } from './types';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -28,7 +27,7 @@ const LAST_SYNC_KEY = 'last_sync_timestamp';
 
 export class StorageManager {
   private static instance: StorageManager;
-  private storageMode: StorageMode = 'local';
+  private storageMode: StorageMode = 'cloud'; // Default to cloud
   private queuedOperations: QueuedOperation[] = [];
 
   static getInstance(): StorageManager {
@@ -41,7 +40,7 @@ export class StorageManager {
   async initialize(): Promise<void> {
     try {
       const mode = await AsyncStorage.getItem(STORAGE_MODE_KEY);
-      this.storageMode = (mode as StorageMode) || 'local';
+      this.storageMode = (mode as StorageMode) || 'cloud'; // Default to cloud
       
       const queuedOps = await AsyncStorage.getItem(QUEUED_OPERATIONS_KEY);
       this.queuedOperations = queuedOps ? JSON.parse(queuedOps) : [];
@@ -51,8 +50,14 @@ export class StorageManager {
   }
 
   async setStorageMode(mode: StorageMode): Promise<void> {
+    const previousMode = this.storageMode;
     this.storageMode = mode;
     await AsyncStorage.setItem(STORAGE_MODE_KEY, mode);
+
+    // If switching from local to cloud, clear local cards
+    if (previousMode === 'local' && mode === 'cloud') {
+      await this.clearLocalCards();
+    }
   }
 
   getStorageMode(): StorageMode {
@@ -63,12 +68,7 @@ export class StorageManager {
     return await AsyncStorage.getItem('authToken');
   }
 
-  async isOnline(): Promise<boolean> {
-    // This would be injected from the network status hook
-    return true; // Placeholder - will be handled by the calling component
-  }
-
-  // Local storage operations
+  // Local storage operations - always available
   async loadLocalCards(): Promise<LoyaltyCard[]> {
     try {
       const jsonValue = await AsyncStorage.getItem('loyalty_cards');
@@ -84,6 +84,14 @@ export class StorageManager {
       await AsyncStorage.setItem('loyalty_cards', JSON.stringify(cards));
     } catch (error) {
       console.error('Failed to save local cards:', error);
+    }
+  }
+
+  async clearLocalCards(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem('loyalty_cards');
+    } catch (error) {
+      console.error('Failed to clear local cards:', error);
     }
   }
 
@@ -183,12 +191,12 @@ export class StorageManager {
   private transformCloudCard(cloudCard: any): LoyaltyCard {
     return {
       id: cloudCard._id || cloudCard.id,
-      name: cloudCard.name,
+      name: cloudCard.name || 'Unknown Card',
       brand: cloudCard.brand,
-      code: cloudCard.code || cloudCard.barcode,
+      code: cloudCard.code || cloudCard.barcode || '',
       codeType: cloudCard.codeType || 'barcode',
-      color: cloudCard.color,
-      dateAdded: new Date(cloudCard.createdAt).getTime(),
+      color: cloudCard.color || '#4F6BFF',
+      dateAdded: cloudCard.createdAt ? new Date(cloudCard.createdAt).getTime() : Date.now(),
       lastUsed: cloudCard.lastUsed ? new Date(cloudCard.lastUsed).getTime() : undefined,
       notes: cloudCard.notes,
       isFavorite: false, // Cloud doesn't store favorites yet
@@ -252,141 +260,145 @@ export class StorageManager {
     await AsyncStorage.setItem(QUEUED_OPERATIONS_KEY, JSON.stringify(this.queuedOperations));
   }
 
-  // Unified card operations
+  // Unified card operations - ALWAYS use local storage, sync to cloud when available
   async loadCards(): Promise<LoyaltyCard[]> {
-    if (this.storageMode === 'local') {
-      return await this.loadLocalCards();
-    } else {
+    // Always load from local storage first
+    const localCards = await this.loadLocalCards();
+    
+    // If cloud mode and online, try to sync from cloud
+    if (this.storageMode === 'cloud') {
       try {
-        const cloudCards = await this.loadCloudCards();
-        // Cache cloud cards locally for offline access
-        await this.saveLocalCards(cloudCards);
-        return cloudCards;
+        const token = await this.getAuthToken();
+        if (token) {
+          const cloudCards = await this.loadCloudCards();
+          // Update local cache with cloud data
+          await this.saveLocalCards(cloudCards);
+          return cloudCards;
+        }
       } catch (error) {
-        console.error('Failed to load cloud cards, falling back to local:', error);
-        return await this.loadLocalCards();
+        console.error('Failed to load cloud cards, using local cache:', error);
       }
     }
+    
+    return localCards;
   }
 
   async saveCard(card: LoyaltyCard, isOnline: boolean = true): Promise<LoyaltyCard> {
-    if (this.storageMode === 'local') {
-      const localCards = await this.loadLocalCards();
-      localCards.push(card);
-      await this.saveLocalCards(localCards);
-      return card;
-    } else {
+    // Always save locally first
+    const localCards = await this.loadLocalCards();
+    localCards.push(card);
+    await this.saveLocalCards(localCards);
+
+    // If cloud mode, try to sync to cloud
+    if (this.storageMode === 'cloud') {
       if (isOnline) {
         try {
-          const savedCard = await this.saveCloudCard(card);
-          // Update local cache
-          const localCards = await this.loadLocalCards();
-          localCards.push(savedCard);
-          await this.saveLocalCards(localCards);
-          return savedCard;
+          const token = await this.getAuthToken();
+          if (token) {
+            const savedCard = await this.saveCloudCard(card);
+            // Update local cache with cloud response
+            const updatedLocalCards = await this.loadLocalCards();
+            const index = updatedLocalCards.findIndex(c => c.id === card.id);
+            if (index !== -1) {
+              updatedLocalCards[index] = savedCard;
+              await this.saveLocalCards(updatedLocalCards);
+            }
+            return savedCard;
+          }
         } catch (error) {
           console.error('Failed to save to cloud, queuing operation:', error);
           await this.queueOperation({ type: 'create', card });
-          // Save locally as fallback
-          const localCards = await this.loadLocalCards();
-          localCards.push(card);
-          await this.saveLocalCards(localCards);
-          return card;
         }
       } else {
+        // Queue for later sync when online
         await this.queueOperation({ type: 'create', card });
-        const localCards = await this.loadLocalCards();
-        localCards.push(card);
-        await this.saveLocalCards(localCards);
-        return card;
       }
     }
+
+    return card;
   }
 
   async updateCard(card: LoyaltyCard, isOnline: boolean = true): Promise<LoyaltyCard> {
-    if (this.storageMode === 'local') {
-      const localCards = await this.loadLocalCards();
-      const index = localCards.findIndex(c => c.id === card.id);
-      if (index !== -1) {
-        localCards[index] = card;
-        await this.saveLocalCards(localCards);
-      }
-      return card;
-    } else {
+    // Always update locally first
+    const localCards = await this.loadLocalCards();
+    const index = localCards.findIndex(c => c.id === card.id);
+    if (index !== -1) {
+      localCards[index] = card;
+      await this.saveLocalCards(localCards);
+    }
+
+    // If cloud mode, try to sync to cloud
+    if (this.storageMode === 'cloud') {
       if (isOnline) {
         try {
-          const updatedCard = await this.updateCloudCard(card);
-          // Update local cache
-          const localCards = await this.loadLocalCards();
-          const index = localCards.findIndex(c => c.id === card.id);
-          if (index !== -1) {
-            localCards[index] = updatedCard;
-            await this.saveLocalCards(localCards);
+          const token = await this.getAuthToken();
+          if (token) {
+            const updatedCard = await this.updateCloudCard(card);
+            // Update local cache with cloud response
+            const updatedLocalCards = await this.loadLocalCards();
+            const localIndex = updatedLocalCards.findIndex(c => c.id === card.id);
+            if (localIndex !== -1) {
+              updatedLocalCards[localIndex] = updatedCard;
+              await this.saveLocalCards(updatedLocalCards);
+            }
+            return updatedCard;
           }
-          return updatedCard;
         } catch (error) {
           console.error('Failed to update cloud card, queuing operation:', error);
           await this.queueOperation({ type: 'update', card });
-          // Update locally as fallback
-          const localCards = await this.loadLocalCards();
-          const index = localCards.findIndex(c => c.id === card.id);
-          if (index !== -1) {
-            localCards[index] = card;
-            await this.saveLocalCards(localCards);
-          }
-          return card;
         }
       } else {
+        // Queue for later sync when online
         await this.queueOperation({ type: 'update', card });
-        const localCards = await this.loadLocalCards();
-        const index = localCards.findIndex(c => c.id === card.id);
-        if (index !== -1) {
-          localCards[index] = card;
-          await this.saveLocalCards(localCards);
-        }
-        return card;
       }
     }
+
+    return card;
   }
 
   async deleteCard(cardId: string, isOnline: boolean = true): Promise<void> {
-    if (this.storageMode === 'local') {
-      const localCards = await this.loadLocalCards();
-      const filteredCards = localCards.filter(c => c.id !== cardId);
-      await this.saveLocalCards(filteredCards);
-    } else {
+    // Always delete locally first
+    const localCards = await this.loadLocalCards();
+    const filteredCards = localCards.filter(c => c.id !== cardId);
+    await this.saveLocalCards(filteredCards);
+
+    // If cloud mode, try to sync to cloud
+    if (this.storageMode === 'cloud') {
       if (isOnline) {
         try {
-          await this.deleteCloudCard(cardId);
-          // Update local cache
-          const localCards = await this.loadLocalCards();
-          const filteredCards = localCards.filter(c => c.id !== cardId);
-          await this.saveLocalCards(filteredCards);
+          const token = await this.getAuthToken();
+          if (token) {
+            await this.deleteCloudCard(cardId);
+          }
         } catch (error) {
           console.error('Failed to delete cloud card, queuing operation:', error);
           await this.queueOperation({ type: 'delete', cardId });
-          // Delete locally as fallback
-          const localCards = await this.loadLocalCards();
-          const filteredCards = localCards.filter(c => c.id !== cardId);
-          await this.saveLocalCards(filteredCards);
         }
       } else {
+        // Queue for later sync when online
         await this.queueOperation({ type: 'delete', cardId });
-        const localCards = await this.loadLocalCards();
-        const filteredCards = localCards.filter(c => c.id !== cardId);
-        await this.saveLocalCards(filteredCards);
       }
     }
   }
 
   // Sync conflict resolution
   async checkForSyncConflicts(): Promise<SyncConflictData | null> {
+    if (this.storageMode === 'local') return null;
+    
     try {
       const localCards = await this.loadLocalCards();
       const cloudCards = await this.loadCloudCards();
 
       if (localCards.length === 0) {
         return null; // No conflict if no local data
+      }
+
+      // Check if there are meaningful differences
+      const hasConflicts = localCards.length !== cloudCards.length ||
+        !this.arraysEqual(localCards, cloudCards);
+
+      if (!hasConflicts) {
+        return null;
       }
 
       return {
@@ -399,6 +411,15 @@ export class StorageManager {
       console.error('Failed to check sync conflicts:', error);
       return null;
     }
+  }
+
+  private arraysEqual(a: LoyaltyCard[], b: LoyaltyCard[]): boolean {
+    if (a.length !== b.length) return false;
+    
+    const aIds = new Set(a.map(card => card.id));
+    const bIds = new Set(b.map(card => card.id));
+    
+    return aIds.size === bIds.size && [...aIds].every(id => bIds.has(id));
   }
 
   async resolveSyncConflict(action: SyncAction, conflictData: SyncConflictData): Promise<void> {

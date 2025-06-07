@@ -119,6 +119,7 @@
     "title": "Settings",
     "login": "Sign in to sync your cards",
     "logout": {
+      "description": "You are currently signed in. Sign out to stop syncing your cards. Your local cards will remain.",
       "title": "Sign Out",
       "confirm": "Are you sure you want to sign out?"
     },
@@ -160,6 +161,12 @@
     "mode": {
       "title": "Storage Mode",
       "subtitle": "Choose how your cards are stored and synchronized",
+      "recommended": "Recommended",
+      "warning": {
+        "title": "Switch to Cloud Storage?",
+        "message": "Switching to cloud storage will delete all your local cards. Your cards will be synced from the cloud instead. This action cannot be undone.",
+        "confirm": "Switch to Cloud"
+      },
       "local": {
         "title": "Local Storage",
         "description": "Store cards only on this device",
@@ -169,10 +176,10 @@
       },
       "cloud": {
         "title": "Cloud Storage",
-        "description": "Store cards in the cloud with sync",
+        "description": "Store cards in the cloud with sync across devices",
         "feature1": "Sync across devices",
         "feature2": "Automatic backup",
-        "limitation": "Requires internet connection"
+        "feature3": "Works offline too"
       }
     },
     "offline": {

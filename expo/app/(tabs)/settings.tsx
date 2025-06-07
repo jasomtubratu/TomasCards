@@ -104,26 +104,38 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      t('settings.logout.title'),
-      t('settings.logout.confirm'),
-      [
-        {
-          text: t('common.buttons.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.buttons.logout'),
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/auth/login');
-            setIsLoggedIn(false);
-            setEmail('');
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        `${t('settings.logout.title')}\n${t('settings.logout.confirm')}`
+      );
+      if (confirmed) {
+        await logout();
+        router.replace('/auth/login');
+        setIsLoggedIn(false);
+        setEmail('');
+      }
+    } else {
+      Alert.alert(
+        t('settings.logout.title'),
+        t('settings.logout.confirm'),
+        [
+          {
+            text: t('common.buttons.cancel'),
+            style: 'cancel',
           },
-        },
-      ]
-    );
+          {
+            text: t('common.buttons.logout'),
+            style: 'destructive',
+            onPress: async () => {
+              await logout();
+              router.replace('/auth/login');
+              setIsLoggedIn(false);
+              setEmail('');
+            },
+          },
+        ]
+      );
+    }
   };
 
   return (
@@ -147,7 +159,7 @@ export default function SettingsScreen() {
                   {!isOnline && ' (Offline)'}
                 </Text>
                 <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                  {t('settings.logout')}
+                  {t('settings.logout.description')}
                 </Text>
               </View>
             </View>

@@ -53,7 +53,7 @@ export default function HomeScreen() {
       await storageManager.initialize();
       setStorageMode(storageManager.getStorageMode());
       
-      // Check for sync conflicts when user logs in
+      // Check for sync conflicts when user logs in and is using cloud storage
       if (isAuthenticated && isOnline && storageManager.getStorageMode() === 'cloud') {
         const conflicts = await storageManager.checkForSyncConflicts();
         if (conflicts) {
@@ -68,11 +68,11 @@ export default function HomeScreen() {
 
   // Update sync status based on network and auth state
   useEffect(() => {
-    if (!isOnline) {
-      setSyncStatus('offline');
-    } else if (storageMode === 'local') {
+    if (storageMode === 'local') {
       setSyncStatus('synced');
     } else if (!isAuthenticated) {
+      setSyncStatus('offline');
+    } else if (!isOnline) {
       setSyncStatus('offline');
     } else {
       setSyncStatus('synced');
@@ -87,13 +87,13 @@ export default function HomeScreen() {
       const data = await storageManager.loadCards();
       setCards(data);
       
-      // Process queued operations if online
+      // Process queued operations if online and using cloud storage
       if (isOnline && isAuthenticated && storageMode === 'cloud') {
         await storageManager.processQueuedOperations();
         setPendingOperations(storageManager.getQueuedOperationsCount());
       }
       
-      setSyncStatus(isOnline && storageMode === 'cloud' ? 'synced' : 'offline');
+      setSyncStatus(storageMode === 'cloud' && isOnline && isAuthenticated ? 'synced' : 'offline');
     } catch (e) {
       console.error('Error loading cards', e);
       setSyncStatus('error');
@@ -119,14 +119,7 @@ export default function HomeScreen() {
   };
 
   const handleAddCard = () => {
-    if (storageMode === 'cloud' && !isOnline) {
-      Alert.alert(
-        t('storage.offline.title'),
-        t('storage.offline.message'),
-        [{ text: t('common.buttons.ok') }]
-      );
-      return;
-    }
+    // Cloud storage works offline now, no need to block
     router.push('/add');
   };
 
@@ -174,7 +167,7 @@ export default function HomeScreen() {
   const sortCards = (cards: LoyaltyCard[]) => {
     switch (sortType) {
       case 'name':
-        return [...cards].sort((a, b) => a.name.localeCompare(b.name));
+        return [...cards].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'date':
         return [...cards].sort((a, b) => b.dateAdded - a.dateAdded);
       case 'lastUsed':
@@ -308,17 +301,10 @@ export default function HomeScreen() {
               <ArrowUpDown size={20} color={colors.textPrimary} />
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[
-                styles.headerButton, 
-                { backgroundColor: colors.backgroundMedium },
-                (storageMode === 'cloud' && !isOnline) && styles.disabledButton
-              ]}
+              style={[styles.headerButton, { backgroundColor: colors.backgroundMedium }]}
               onPress={handleAddCard}
-              disabled={storageMode === 'cloud' && !isOnline}
             >
-              <Plus size={20} color={
-                (storageMode === 'cloud' && !isOnline) ? colors.textHint : colors.textPrimary
-              } />
+              <Plus size={20} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
         }
@@ -413,9 +399,6 @@ const styles = StyleSheet.create({
   headerButton: {
     padding: 8,
     borderRadius: 8,
-  },
-  disabledButton: {
-    opacity: 0.5,
   },
   sortMenu: {
     position: 'absolute',

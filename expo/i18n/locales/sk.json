@@ -119,6 +119,7 @@
     "title": "Nastavenia",
     "login": "Prihláste sa pre synchronizáciu kariet",
     "logout": {
+      "description": "Odhlásiť sa z vášho účtu a zastaviť synchronizáciu kariet s cloudom. Vaše lokálne karty zostanú nedotknuté.",
       "title": "Odhlásiť sa",
       "confirm": "Naozaj sa chcete odhlásiť?"
     },
@@ -165,6 +166,12 @@
     "mode": {
       "title": "Režim úložiska",
       "subtitle": "Vyberte si, ako sa vaše karty ukladajú a synchronizujú",
+      "recommended": "Odporúčané",
+      "warning": {
+        "title": "Prepnúť na cloudové úložisko?",
+        "message": "Prepnutie na cloudové úložisko vymaže všetky vaše lokálne karty. Vaše karty sa budú synchronizovať z cloudu. Táto akcia je nevratná.",
+        "confirm": "Prepnúť na cloud"
+      },
       "local": {
         "title": "Lokálne úložisko",
         "description": "Ukladať karty len na tomto zariadení",
@@ -174,10 +181,10 @@
       },
       "cloud": {
         "title": "Cloudové úložisko",
-        "description": "Ukladať karty v cloude so synchronizáciou",
+        "description": "Ukladať karty v cloude so synchronizáciou medzi zariadeniami",
         "feature1": "Synchronizácia medzi zariadeniami",
         "feature2": "Automatické zálohovanie",
-        "limitation": "Vyžaduje internetové pripojenie"
+        "feature3": "Funguje aj offline"
       }
     },
     "offline": {

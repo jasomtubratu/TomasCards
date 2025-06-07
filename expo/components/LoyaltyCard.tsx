@@ -25,9 +25,13 @@ export default function LoyaltyCardComponent({ card, onPress }: Props) {
     ? (matchedCard.logo as ImageSourcePropType)
     : null;
 
+  // Ensure card name exists and has at least one character
+  const cardName = card.name || 'Unknown Card';
+  const firstLetter = cardName.charAt(0).toUpperCase() || '?';
+
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: card.color }]}
+      style={[styles.container, { backgroundColor: card.color || colors.accent }]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -38,7 +42,9 @@ export default function LoyaltyCardComponent({ card, onPress }: Props) {
           resizeMode="contain"
         />
       ) : (
-        <Text style={[styles.letter, { color: colors.textPrimary }]}>{card.name.charAt(0)}</Text>
+        <Text style={[styles.letter, { color: colors.textPrimary }]}>
+          {firstLetter}
+        </Text>
       )}
     </TouchableOpacity>
   );
